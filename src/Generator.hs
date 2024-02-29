@@ -80,6 +80,9 @@ primaryKeys n = do
 --------------------------------------------------------------------------------
 -- | Statement generators
 --------------------------------------------------------------------------------
+
+-- | General helpers
+
 type InsertStatement = String
 type SchemaName = String
 type Atributes = String
@@ -87,10 +90,22 @@ type Values = String
 
 -- | Make an n long list of randomly generated items
 gen :: Int -> Gen a -> Gen [a]
+gen 0 g = pure []
 gen n g = do
   a <- g
   b <- gen (n - 1) g
   pure (a : b)
+
+-- | Create the final insert statement
+insertStatement :: SchemaName -> [Atributes] -> [Values] -> InsertStatement
+insertStatement schemaName as vs =
+  "INSERT INTO "++(map toUpper schemaName)
+  ++ listify as ++ "\n"
+  ++ "VALUES " ++ listify vs ++ ";\n"
+  where
+    listify as = "("++ intercalate "," as ++ ")"
+
+-- | More specific
 
 
 insertUser :: Gen InsertStatement
@@ -112,14 +127,33 @@ insertUsers n = do
     makeUser (pm,fn,sn) =
       insertStatement "user" ["userId","name"] [show pm,name2 fn sn]
 
-
-insertStatement :: SchemaName -> [Atributes] -> [Values] -> InsertStatement
-insertStatement schemaName as vs =
-  "INSERT INTO "++(map toUpper schemaName)
-  ++ listify as ++ "\n"
-  ++ "VALUES " ++ listify vs ++ ";\n"
+-- | currently may produce both (1,2) and (2,1) in (userId,friendId)
+insertFriend = do
+  userIDs <- primaryKeys 10
+  firstNs <- gen 10 firstname
+  lastNs <- gen 10 surname
+  -- for each userID pick n random other userIDs
+  -- for each list of friends make an insertStatement with p1 p2, p1 p3
+  pure $ makeForAll userIDs
   where
-    listify as = "("++ intercalate "," as ++ ")"
+    -- listOfLists :: [Gen [uIDs]]
+    listsOfFriends userIDs = map (pickIds userIDs) userIDs
+    pickIds userIDs uid= do
+      i <- chooseInt (0,10)
+      f <- gen i (elements userIDs)
+      let friends = filter (\a -> a/=uid) f
+      pure friends
+    personAndFriends userIDs = zip userIDs $ listsOfFriends userIDs -- [(uid,Gen [uids])]
+    makeForAll userIDs = map (makeStatements) $ personAndFriends userIDs
+    makeStatements (uid, gl) = do
+      l <- gl
+      pure $ map (ms uid) l
+    ms uid fid = do
+      insertStatement "Friend" ["UserId","FriendID"] [show uid, show fid]
+
+
+      
 
 test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 test2 = do a<- generate $ insertUser; putStrLn a
+testFriend = do a <- generate insertFriend;b <- mapM generate a; mapM_ (mapM putStrLn) b
