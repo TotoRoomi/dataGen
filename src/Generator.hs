@@ -3,7 +3,7 @@ module Generator where
 
 import Data
 import Test.QuickCheck
-import Data.List(intercalate, nub)
+import Data.List(intercalate, nub, nubBy)
 import Data.Char(toUpper)
 
 
@@ -127,33 +127,44 @@ insertUsers n = do
     makeUser (pm,fn,sn) =
       insertStatement "user" ["userId","name"] [show pm,name2 fn sn]
 
--- | currently may produce both (1,2) and (2,1) in (userId,friendId)
-insertFriend = do
-  userIDs <- primaryKeys 10
-  firstNs <- gen 10 firstname
-  lastNs <- gen 10 surname
+-- | Produces Friends without any duplicates
+insertFriend n = do
+  userIDs <- primaryKeys n
   -- for each userID pick n random other userIDs
   -- for each list of friends make an insertStatement with p1 p2, p1 p3
-  pure $ makeForAll userIDs
+  makeForAll userIDs
   where
-    -- listOfLists :: [Gen [uIDs]]
+    -- listOfFriends :: [Gen [uIDs]]
     listsOfFriends userIDs = map (pickIds userIDs) userIDs
     pickIds userIDs uid= do
-      i <- chooseInt (0,10)
+      i <- chooseInt (0,n)
       f <- gen i (elements userIDs)
       let friends = filter (\a -> a/=uid) f
       pure friends
     personAndFriends userIDs = zip userIDs $ listsOfFriends userIDs -- [(uid,Gen [uids])]
-    makeForAll userIDs = map (makeStatements) $ personAndFriends userIDs
-    makeStatements (uid, gl) = do
-      l <- gl
-      pure $ map (ms uid) l
-    ms uid fid = do
-      insertStatement "Friend" ["UserId","FriendID"] [show uid, show fid]
+    makeForAll userIDs = do
+      -- make a set of all the friend pairs then delete any duplicates where (1,2) and (2,1) are duplicates
+      --                                  [Gen [(Int,Int)]]    [(Int, Gen [Int])]
+      l <- cleanup $ map (makePairs) $ personAndFriends userIDs -- [Gen [uid,fid]]
+      pure $ map (ms) l
+    makeStatements :: Gen [(Int,Int)] -> Gen [String]
+    makeStatements (gpl) = do
+      pairList <- gpl -- [(uid,fid)]
+      pure $ map (ms) pairList
+    ms (uid,fid) = do
+      insertStatement "Friend" ["UserID","FriendID"] [show uid, show fid]
+    makePairs :: (Int, Gen [Int]) -> Gen [(Int,Int)]
+    makePairs (uid, glist) = do
+      friends <- glist
+      pure $ map ((\uid fid -> (uid,fid) ) uid ) friends -- Gen [(uid,fid)]
+    cleanup :: [Gen [(Int,Int)]] -> Gen [(Int,Int)]
+    cleanup listG = do
+      list <- sequence listG -- Gen [[(Int,Int)]]
+      pure $ nubBy (\(a,b) (c,d) -> a==d && b == c )  $ concat list
 
 
       
 
 test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 test2 = do a<- generate $ insertUser; putStrLn a
-testFriend = do a <- generate insertFriend;b <- mapM generate a; mapM_ (mapM putStrLn) b
+testFriend n= do a <- generate$ insertFriend n; mapM_ ( putStrLn) a
