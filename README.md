@@ -38,3 +38,17 @@ insertUsers n = do
       insertStatement "user" ["userId","name"] [show pm,name2 fn sn]
 
 ```
+
+Produces the output 
+
+``` 
+INSERT INTO USER(userId,name)
+VALUES (60646,Melvin Craelius);
+
+INSERT INTO USER(userId,name)
+VALUES (52669,Anas Shahriari);
+
+INSERT INTO USER(userId,name)
+VALUES (49597,Rasmus Jakobsson);
+```
+
