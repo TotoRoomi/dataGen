@@ -28,6 +28,7 @@ library
       Data
       Generator
       Lib
+      Pretty
   other-modules:
       Paths_dataGen
   autogen-modules:
