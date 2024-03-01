@@ -81,7 +81,7 @@ primaryKeys n = do
 -- | Statement generators
 --------------------------------------------------------------------------------
 
--- | General helpers
+-- * General helpers
 
 type InsertStatement = String
 type SchemaName = String
@@ -105,7 +105,7 @@ insertStatement schemaName as vs =
   where
     listify as = "("++ intercalate "," as ++ ")"
 
--- | More specific
+-- * insert constructors
 
 
 insertUser :: Gen InsertStatement
@@ -168,3 +168,15 @@ insertFriend n = do
 test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 test2 = do a<- generate $ insertUser; putStrLn a
 testFriend n= do a <- generate$ insertFriend n; mapM_ ( putStrLn) a
+
+-- | Pretty print a Gen a to see the a
+pretty :: Gen String -> IO ()
+pretty ga = do
+  a <- generate ga
+  putStrLn a
+
+-- | pretty print a list of Gen [a]
+prettyList :: Gen [String] -> IO ()
+prettyList gl = do
+  l <- generate gl
+  mapM_ (\a -> putStrLn a) l

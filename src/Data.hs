@@ -14,6 +14,8 @@ firstname
     ,"Melvin"
     ,"Martin"
     ,"Anas"
+    ,"Tore"
+    ,"Simon"
     ]
 surname
   = elements
@@ -24,5 +26,8 @@ surname
     ,"Jakobsson"
     ,"Lindefors"
     ,"Almawed"
+    ,"Stenberg"
+    ,"Rosén"
+    ,"Maltin"
     ]
 emaildomain = "@kth.se"
