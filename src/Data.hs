@@ -3,11 +3,9 @@
 module Data where
 import Test.QuickCheck
 
-
 -- | Creates a Gen String of names
 firstname
-  = elements
-    ["Toto"
+  = ["Toto"
     ,"Harald"
     ,"Sam"
     ,"Rasmus"
@@ -18,8 +16,7 @@ firstname
     ,"Simon"
     ]
 surname
-  = elements
-    ["Roomi"
+  = ["Roomi"
     ,"Olin"
     ,"Shahriari"
     ,"Craelius"
