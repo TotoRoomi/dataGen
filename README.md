@@ -64,9 +64,8 @@ GHCI starts up and loads the files, then try:
 ghci> generate (date "2024")
 ```
 
-generate takes a "Gen a" and produces an "IO a". If you try this with a "Gen [a]" you'll see that the output is quite unappealing. Instead try the printing functions "pretty" and "prettyList". (These will be refactored in the future). 
+generate takes a "Gen a" and produces an "IO a". If you try this with a "Gen [a]" you'll see that the output is quite unappealing. Instead try the pretty printing function "pretty" that takes a "Gen InsertStatement" and prints it in a readible way. 
 
 ```
-pretty $ date "2024"
-prettyList $ insertUsers 10 
+pretty $ insertUsers 10
 ```
