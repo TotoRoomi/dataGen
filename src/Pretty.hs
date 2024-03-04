@@ -1,6 +1,7 @@
 -- |
 module Pretty where
 import Generator
+import Populator
 import Test.QuickCheck
 import Data.List(intercalate)
 import Data.Char(toUpper)

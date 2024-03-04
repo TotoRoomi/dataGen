@@ -1,4 +1,4 @@
-name:                dataGen
+name:                QuickPop
 version:             0.1.0.0
 github:              "githubuser/dataGen"
 license:             BSD-3-Clause
@@ -45,7 +45,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - dataGen
+    - QuickPop
 
 tests:
   dataGen-test:
@@ -56,4 +56,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - dataGen
+    - QuickPop
