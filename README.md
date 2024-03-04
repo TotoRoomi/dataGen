@@ -1,8 +1,8 @@
 Toto Roomi 
 Version 0.0
-# dataGen
+# QuickPop
 
-A DSL to generate random dummy data for your psql database
+A DSL to populate a PSQL database with random dummy data. Uses QuickCheck, hence the pun. 
 
 ## Dependencies
 
