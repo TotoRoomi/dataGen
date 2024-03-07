@@ -29,3 +29,5 @@ prettyPrintIS (IS schemaName as vs) =
   ++ "VALUES " ++ listify (map showPSQLTYPE vs) ++ ";\n"
   where
     listify as = "("++ intercalate "," as ++ ")"
+
+debugPSQL i g = do l <- generate $ g i; mapM_ (putStrLn . showPSQLTYPE) l

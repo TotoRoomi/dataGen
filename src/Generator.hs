@@ -5,7 +5,7 @@ import Data
 import Test.QuickCheck
 import Data.List(intercalate, nub, nubBy)
 import Data.Char(toUpper)
-
+import Control.Monad(replicateM)
 
 --------------------------------------------------------------------------------
 -- * PSQL types
@@ -36,7 +36,7 @@ psqlInteger n = INTEGER n
 --------------------------------------------------------------------------------
 
 genPSQLTYPEList :: Int -> (a -> PSQLTYPE) -> [a] -> Gen [PSQLTYPE]
-genPSQLTYPEList n f l = gen n $ elements $ map f l
+genPSQLTYPEList n f l = make n $ elements $ map f l
 
 firstnames :: Int -> Gen [PSQLTYPE]
 firstnames n = genPSQLTYPEList n psqlVarchar firstname
@@ -51,12 +51,29 @@ psqlName (VARCHAR first) (VARCHAR last) = VARCHAR (first ++ " " ++ last)
 -- * Attribute generators and helpers
 --------------------------------------------------------------------------------
 -- | Make an n long list of randomly generated items
-gen :: Int -> Gen a -> Gen [a]
-gen 0 g = pure []
-gen n g = do
-  a <- g
-  b <- gen (n - 1) g
-  pure (a : b)
+make :: Int -> Gen a -> Gen [a]
+make = replicateM
+
+unique :: (Eq a) => Int -> Gen a -> Gen [a]
+unique i g = go i 0 g (pure [])
+  where
+    go i n g gl = do
+      l <- gl
+      let l' = nub l
+      let len = length l'
+      if len == i || n == 1000 then pure l'
+        else go i (n+1) g (fill (i - len) g l')
+    fill k g la = do
+      lb <- make k g
+      pure $ la ++ lb
+
+-- | Produces a list of unique primary keys at the specified length
+--   Obs cannot generate more than 88888 numbers
+primaryKeys :: Int -> Gen [PSQLTYPE]
+primaryKeys i = unique i g
+  where g = do
+          i <- chooseInt (11111,99999)
+          pure $ psqlInteger i
 
 -- | generates a random full name
 name :: Gen PSQLTYPE
@@ -100,25 +117,6 @@ date year = do
              | m == 4 || m == 6 || m == 9 || m == 11
              = chooseInt (1,30)
              | otherwise = chooseInt (1,31)
-
--- | Produces a list of unique primary keys at the specified length
---   Obs cannot generate more than 88888 numbers
-primaryKeys :: Int -> Gen [PSQLTYPE]
-primaryKeys n = do
-  if n > 88888 then pure $ fail "Cannot generate more than upper bound 88 888 numbers" -- this just makes an empty list..
-    else loop $ numlist n
-  where
-    loop gl = do
-      l <- gl
-      let ls = nub l
-      if length ls < n then
-        loop $ increase (n - length ls) ls
-        else pure $ map psqlInteger ls
-    increase i l = do
-      ns <- numlist i
-      pure $ l ++ (nub ns)
-    numlist n = vectorOf n (chooseInt (11111,99999)) -- 88 888 unique numbers
-
 
 
 
