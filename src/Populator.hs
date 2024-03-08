@@ -27,10 +27,15 @@ insertStatement s as ps = IS {schemaName = s, attributes = as, values = ps}
 
 statements :: [InsertStatement] -> InsertStatement
 statements iss = Statements iss
+
+insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
+insert s as pss = statements $ map (insertStatement s as) pss
 --------------------------------------------------------------------------------
 -- | Statement generators
 --------------------------------------------------------------------------------
 
+nonReflexivePairs :: Int -> Int -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+nonReflexivePairs = undefined
 
 -- -- | Create the final insert statement
 -- insertStatement :: SchemaName -> [Atributes] -> [Values] -> InsertStatement
@@ -42,26 +47,6 @@ statements iss = Statements iss
 --     listify as = "("++ intercalate "," as ++ ")"
 
 -- * insert constructors
-
-
-insertUser :: Gen InsertStatement
-insertUser = do
-  fn <- firstnames 1
-  sn <- lastnames 1
-  let name = name2 (head fn) (head sn)
-  email <- email2 (head fn) (head sn)
-  date <- date 2024
-  pure $ insertStatement "user" ["name","email","joinDate"] [name,email,date]
-
-insertUsers :: Int -> Gen InsertStatement
-insertUsers n = do
-  primarykeys <- primaryKeys n
-  fns <- firstnames n
-  lns <- lastnames n
-  pure $ statements $ map makeUser (zip3 primarykeys fns lns)
-  where
-    makeUser (pm,fn,sn) =
-      insertStatement "user" ["userId","name"] [pm,name2 fn sn]
 
 ---- | Produces Friends without any duplicates
 --insertFriend n = do
