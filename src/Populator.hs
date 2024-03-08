@@ -34,8 +34,25 @@ insert s as pss = statements $ map (insertStatement s as) pss
 -- | Statement generators
 --------------------------------------------------------------------------------
 
-nonReflexivePairs :: Int -> Int -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs :: (Int,Int) -> [PSQLTYPE] -> Gen [[(PSQLTYPE,PSQLTYPE)]]
+pairs ft l = do
+  ns <- make (length l) $ chooseInt ft
+  let ln = zip3 l ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
+  mapM (f l) ln
+  where
+    f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen [(PSQLTYPE,PSQLTYPE)]
+    f l (p, n, index)
+      | drop index l == [] = pure []
+      |otherwise = do
+         let l' = drop index l
+         ps <- make n $ do
+           a <- elements l'
+           pure (p,a)
+         pure (nub ps)
+
+--nonReflexivePairs :: (Int, Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
 nonReflexivePairs = undefined
+  -- for each a build a list from the rest of the lis
 
 -- -- | Create the final insert statement
 -- insertStatement :: SchemaName -> [Atributes] -> [Values] -> InsertStatement

@@ -41,7 +41,7 @@ user n = do
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
   -- at least 2 friends, at most half of all the users
-  l <- nonReflexivePairs 2 (length uids `div` 2) uids -- [(uid,fid)]
+  l <- nonReflexivePairs (2, (length uids `div` 2)) uids -- [(uid,fid)]
   pure $ statements $ map f l
   where
     f (uid,fid)= insertStatement "Friend" ["UserId","FriendID"] [uid,fid]
