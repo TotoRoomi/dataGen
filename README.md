@@ -2,7 +2,7 @@ Toto Roomi
 Version 0.0
 # QuickPop
 
-A DSL to populate a PSQL database with random dummy data. Uses QuickCheck, hence the pun. 
+A DSL to populate a PSQL database with random dummy data. Uses QuickCheck, hence the name quickcheck+populate=quickpop. 
 
 ## Dependencies
 
