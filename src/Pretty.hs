@@ -6,12 +6,6 @@ import Test.QuickCheck
 import Data.List(intercalate)
 import Data.Char(toUpper)
 
-showPSQLTYPE :: PSQLTYPE -> String
-showPSQLTYPE t
-  = case t of
-      VARCHAR s -> s
-      DATE (y,m,d) -> show y ++ "-"++show m++"-"++show d
-      INTEGER i -> show i
 
 
 -- | Pretty print a Gen a to see the a
@@ -30,4 +24,5 @@ prettyPrintIS (IS schemaName as vs) =
   where
     listify as = "("++ intercalate "," as ++ ")"
 
-debugPSQL i g = do l <- generate $ g i; mapM_ (putStrLn . showPSQLTYPE) l
+debugPSQLList i g = do l <- generate $ g i; mapM_ (putStrLn . showPSQLTYPE) l
+debugPSQL g = do a <- generate g; putStrLn $ showPSQLTYPE a
