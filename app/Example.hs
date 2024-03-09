@@ -4,6 +4,7 @@ module Example where
 import Test.QuickCheck
 import Populator
 import Generator
+import Data.List(zip4)
 {-
 X User(UserID, Name)
 X Friend(UserID, FriendID)
@@ -12,8 +13,8 @@ X PostTag(PostID, Tag)
 X ImagePost(PostID, Content, Filter)
 X TextPost(PostID, Content)
 X VideoPost(PostID, Content)
-Likes(UserID, PostID, Date)
-Event(EventID, Place, Date, CreatorID)
+X Likes(UserID, PostID, Date)
+X Event(EventID, Place, Date, CreatorID)
 UserEvent(UserID, EventID)
 X Subscription(UserID, Expiration)
 X Transaction(TransactionID, Date)
@@ -77,13 +78,27 @@ imagePost pids = postType "Image" pids
 videoPost :: [PSQLTYPE] -> Gen InsertStatement
 videoPost pids = postType "Video" pids
 
-transaction :: Int-> Gen InsertStatement
-transaction n = do
-  primaryKeys <- primaryKeys n
-  dates <- make n $ date 2024
-  pure $ statements $ map f $ zip primaryKeys dates
+likes :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+likes uids pids = do
+  ps <- pairs2 pids uids -- [(uid,pid)]
+  dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  let (pids', uids') = unzip ps
+  pure . statements $ map f $ zip3 pids' uids' dates
   where
-    f (k,d) = insertStatement "Transaction" ["TransactionID","Date"] [k,d]
+    f (p,u,d) = insertStatement "Likes" ["UserID", "PostID", "Date"] [u,p,d]
+
+event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+event eids uids = do
+  ps <- pairs2 eids uids
+  dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  places <- make (length ps) $ place
+  let (eids', uids') = unzip ps
+  pure . statements $ map f $ zip4 eids' places dates uids'
+  where
+    f (e, p, d, u) = insertStatement "Event" ["EventID","Place","Date","CreatorID"] [e,p,d,u]
+
+userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+userEvent uids eids = undefined
 
 subscription :: [PSQLTYPE] -> Gen InsertStatement
 subscription uids = do
@@ -93,3 +108,11 @@ subscription uids = do
   pure $ statements $ map f $ zip l dates
   where
     f (id, d) = insertStatement "Subscription" ["UserID","Date"] [id,d]
+
+transaction :: Int-> Gen InsertStatement
+transaction n = do
+  primaryKeys <- primaryKeys n
+  dates <- make n $ date 2024
+  pure $ statements $ map f $ zip primaryKeys dates
+  where
+    f (k,d) = insertStatement "Transaction" ["TransactionID","Date"] [k,d]
