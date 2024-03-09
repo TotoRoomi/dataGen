@@ -5,18 +5,18 @@ import Test.QuickCheck
 import Populator
 import Generator
 {-
-User(UserID, Name)
-Friend(UserID, FriendID)
-Post(PostID, Date, UserID)
-PostTag(PostID, Tag)
-ImagePost(PostID, Content, Filter)
-TextPost(PostID, Content)
-VideoPost(PostID, Content)
+X User(UserID, Name)
+X Friend(UserID, FriendID)
+X Post(PostID, Date, UserID)
+X PostTag(PostID, Tag)
+X ImagePost(PostID, Content, Filter)
+X TextPost(PostID, Content)
+X VideoPost(PostID, Content)
 Likes(UserID, PostID, Date)
 Event(EventID, Place, Date, CreatorID)
 UserEvent(UserID, EventID)
-Subscription(UserID, Expiration)
-Transaction(TransactionID, Date)
+X Subscription(UserID, Expiration)
+X Transaction(TransactionID, Date)
 -}
 
 exampleUser :: Gen InsertStatement
@@ -41,7 +41,7 @@ user n = do
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
   -- at least 2 friends, at most half of all the users
-  l <- nonReflexivePairs (2, (length uids `div` 2)) uids -- [(uid,fid)]
+  l <- pairs (2, (length uids `div` 2)) uids -- [(uid,fid)]
   pure $ statements $ map f l
   where
     f (uid,fid)= insertStatement "Friend" ["UserId","FriendID"] [uid,fid]
@@ -54,7 +54,28 @@ post pids uids = do
   where
     f (pid,d,uid) = insertStatement "Post" ["PostID", "Date", "UserId"] [pid,d,uid]
 
+postTag :: [PSQLTYPE] -> Gen InsertStatement
+postTag pids = do
+  tags <- sequence (replicate (length pids) tagList)
+  pure $ statements $ map f $ zip pids tags
+  where
+    f (id, tag) = insertStatement "PostTag" ["PostID","Tag"] [id,tag]
 
+postType :: String -> [PSQLTYPE] -> Gen InsertStatement
+postType posttype pids = do
+  contents <- mapM (url posttype) pids
+  pure $ statements $ map f $ zip pids contents
+  where
+    f (id, content) = insertStatement "TextPost" ["PostID","Content"] [id,content]
+
+textPost :: [PSQLTYPE] -> Gen InsertStatement
+textPost pids = postType "Text" pids
+
+imagePost :: [PSQLTYPE] -> Gen InsertStatement
+imagePost pids = postType "Image" pids
+
+videoPost :: [PSQLTYPE] -> Gen InsertStatement
+videoPost pids = postType "Video" pids
 
 transaction :: Int-> Gen InsertStatement
 transaction n = do
