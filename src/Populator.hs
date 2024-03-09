@@ -52,3 +52,21 @@ pairs ft l = do
          pure (nub ps)
 
 reflexivePairs = undefined
+
+-- | For each element in the first list,
+--   choose a random element from the second list.
+--   Elements from the first list occur only once,
+--   but elements from the second list occur multiple times.
+pairs2 :: [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs2 k1 k2 = do
+  let g = elements k2
+  mapM (f g) k1
+  where
+    f g a = do
+      b <- g
+      pure (a,b)
+
+-- | For each key in the first list choose
+--   up to n random and unique keys in the second list.
+pairs2' :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs2' = undefined
