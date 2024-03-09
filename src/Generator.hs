@@ -1,11 +1,14 @@
 -- |  Generates usable data for insert statements
 module Generator where
 
+
 import Data
 import Test.QuickCheck
 import Data.List(intercalate, nub, nubBy)
 import Data.Char(toUpper)
 import Control.Monad(replicateM)
+import Data.Time.Calendar
+
 
 --------------------------------------------------------------------------------
 -- * PSQL types
@@ -17,6 +20,13 @@ data PSQLTYPE
   | INTEGER Int
   deriving (Eq,Show)
 
+showPSQLTYPE :: PSQLTYPE -> String
+showPSQLTYPE t
+  = case t of
+      VARCHAR s -> s
+      DATE (y,m,d) -> show y ++ "-"++show m++"-"++show d
+      INTEGER i -> show i
+
 
 --------------------------------------------------------------------------------
 -- * PSQL constructors
@@ -25,8 +35,8 @@ data PSQLTYPE
 psqlVarchar :: String -> PSQLTYPE
 psqlVarchar s = VARCHAR s
 
-psqlDate :: Int -> Int -> Int -> PSQLTYPE
-psqlDate y m d = DATE (y,m,d)
+psqlDate :: (Int,Int,Int) -> PSQLTYPE
+psqlDate d = DATE d
 
 psqlInteger :: Int -> PSQLTYPE
 psqlInteger n = INTEGER n
@@ -46,6 +56,7 @@ lastnames n =  genPSQLTYPEList n psqlVarchar surname
 
 psqlName :: PSQLTYPE -> PSQLTYPE -> PSQLTYPE
 psqlName (VARCHAR first) (VARCHAR last) = VARCHAR (first ++ " " ++ last)
+
 
 --------------------------------------------------------------------------------
 -- * Attribute generators and helpers
@@ -111,16 +122,39 @@ date :: Int -> Gen PSQLTYPE
 date year = do
   month <- chooseInt (1,12)
   day <- dayGen month
-  pure $ psqlDate year month day
-  where
-    dayGen m | m == 2 = chooseInt (1,28)
-             | m == 4 || m == 6 || m == 9 || m == 11
-             = chooseInt (1,30)
-             | otherwise = chooseInt (1,31)
+  pure $ psqlDate (year, month, day)
 
+dayGen :: Int -> Gen Int
+dayGen m | m == 2 = chooseInt (1,28)
+         | m == 4 || m == 6 || m == 9 || m == 11
+            = chooseInt (1,30)
+         | otherwise = chooseInt (1,31)
 
+dateBetween :: (Int,Int,Int) -> (Int,Int,Int) -> Gen PSQLTYPE
+dateBetween (fy,fm,fd) (ty,tm,td) = do
+  let from = fromGregorian (toInteger fy) fm fd
+  let to = fromGregorian (toInteger ty) tm td
+  date <- elements $ enumFromTo from to
+  let (y,m,d) = toGregorian date
+  pure . psqlDate $ (fromInteger y,  m,  d)
+     
 
-      
+url :: String -> PSQLTYPE ->Gen PSQLTYPE
+url t (INTEGER i) = pure . psqlVarchar $ "\"http://kthsocial.com/"
+                           ++ t++"/"
+                           ++ show ( i * i)
+                           ++ "\""
+
+tagList :: Gen PSQLTYPE
+tagList = do
+  n <- chooseInt (1,20)
+  ts <- unique n (elements tag)
+  pure . psqlVarchar $ "\""++ intercalate " " ts ++ "\""
+
+place :: Gen PSQLTYPE
+place = do
+  a <- elements address
+  pure . psqlVarchar $ a
 
 --test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 --test2 = do a<- generate $ insertUser; putStrLn a
