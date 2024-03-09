@@ -154,7 +154,7 @@ tagList = do
 place :: Gen PSQLTYPE
 place = do
   a <- elements address
-  pure . psqlVarchar $ a
+  pure . psqlVarchar $ "\""++a++"\""
 
 --test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 --test2 = do a<- generate $ insertUser; putStrLn a
