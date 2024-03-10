@@ -5,6 +5,7 @@ import Test.QuickCheck
 import Populator
 import Generator
 import Data.List(zip4)
+import Pretty
 {-
  User(UserID, Name)
  Friend(UserID, FriendID)
@@ -20,6 +21,26 @@ import Data.List(zip4)
  Transaction(TransactionID, Date)
 -}
 
+printAllInserts = do
+  -- All primaryKeys
+  userIDs <- generate $ primaryKeys 100
+  postIDs <- generate $ primaryKeys 1000
+  eventIDs <- generate $ primaryKeys 25
+  -- Generate inserts
+  pretty $ user userIDs
+  pretty $  friend userIDs
+  pretty $ post postIDs userIDs
+  pretty $ postTag postIDs
+  pretty $ textPost (take 500 postIDs)
+  pretty $ imagePost (take 300 $ drop 500 postIDs)
+  pretty $ videoPost (drop 800 postIDs)
+  pretty $ likes userIDs postIDs
+  pretty $ event eventIDs userIDs
+  pretty $ userEvent userIDs eventIDs
+  pretty $ subscription userIDs
+  pretty $ transaction 100
+
+
 exampleUser :: Gen InsertStatement
 exampleUser = do
   fn <- firstnames 1
@@ -29,12 +50,12 @@ exampleUser = do
   date <- date 2024
   pure $ insertStatement "user" ["name","email","joinDate"] [name,email,date]
 
-user :: Int -> Gen InsertStatement
-user n = do
-  primarykeys <- primaryKeys n
+user :: [PSQLTYPE] -> Gen InsertStatement
+user uids = do
+  let n = length uids
   fns <- firstnames n
   lns <- lastnames n
-  pure $ statements $ map makeUser (zip3 primarykeys fns lns)
+  pure $ statements $ map makeUser (zip3 uids fns lns)
   where
     makeUser (pm,fn,sn) =
       insertStatement "user" ["userId","name"] [pm,name2 fn sn]
@@ -113,7 +134,7 @@ subscription uids = do
   where
     f (id, d) = insertStatement "Subscription" ["UserID","Date"] [id,d]
 
-transaction :: Int-> Gen InsertStatement
+transaction :: Int -> Gen InsertStatement
 transaction n = do
   primaryKeys <- primaryKeys n
   dates <- make n $ date 2024

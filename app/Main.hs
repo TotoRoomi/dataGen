@@ -11,6 +11,4 @@ import Test.QuickCheck
 
 main :: IO ()
 main = do
-  pids <- generate $ primaryKeys 1000
-  uids <- generate $ primaryKeys 100
-  pretty $ post pids uids
+  printAllInserts
