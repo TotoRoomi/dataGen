@@ -6,18 +6,18 @@ import Populator
 import Generator
 import Data.List(zip4)
 {-
-X User(UserID, Name)
-X Friend(UserID, FriendID)
-X Post(PostID, Date, UserID)
-X PostTag(PostID, Tag)
-X ImagePost(PostID, Content, Filter)
-X TextPost(PostID, Content)
-X VideoPost(PostID, Content)
-X Likes(UserID, PostID, Date)
-X Event(EventID, Place, Date, CreatorID)
-X UserEvent(UserID, EventID)
-X Subscription(UserID, Expiration)
-X Transaction(TransactionID, Date)
+ User(UserID, Name)
+ Friend(UserID, FriendID)
+ Post(PostID, Date, UserID)
+ PostTag(PostID, Tag)
+ ImagePost(PostID, Content, Filter)
+ TextPost(PostID, Content)
+ VideoPost(PostID, Content)
+ Likes(UserID, PostID, Date)
+ Event(EventID, Place, Date, CreatorID)
+ UserEvent(UserID, EventID)
+ Subscription(UserID, Expiration)
+ Transaction(TransactionID, Date)
 -}
 
 exampleUser :: Gen InsertStatement
