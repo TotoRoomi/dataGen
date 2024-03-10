@@ -33,10 +33,7 @@ insert s as pss = statements $ map (insertStatement s as) pss
 --------------------------------------------------------------------------------
 -- | Statement generators
 --------------------------------------------------------------------------------
-
-pairs' ::  (Int,Int) -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
-pairs' ft l = pairs2' ft l l
-
+-- | Create non reflexive pairs from one list of keys
 pairs :: (Int,Int) -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
 pairs ft l = do
   ns <- make (length l) $ chooseInt ft
@@ -54,14 +51,12 @@ pairs ft l = do
            pure (p,a)
          pure (nub ps)
 
-reflexivePairs = undefined
-
 -- | For each element in the first list,
 --   choose a random element from the second list.
 --   Elements from the first list occur only once,
 --   but elements from the second list occur multiple times.
-pairs2 :: [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
-pairs2 k1 k2 = do
+pairs2' :: [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs2' k1 k2 = do
   let g = elements k2
   mapM (f g) k1
   where
@@ -71,19 +66,16 @@ pairs2 k1 k2 = do
 
 -- | For each key in the first list choose
 --   up to n random and unique keys in the second list.
-pairs2' :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
-pairs2' ft k1 k2 = do
+pairs2 :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs2 ft k1 k2 = do
   ns <- make (length k1) $ chooseInt ft
   let k1n = zip3 k1 ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
   pairs <- mapM (f k2) k1n
   pure . concat $ pairs
   where
     f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen [(PSQLTYPE,PSQLTYPE)]
-    f l (p, n, index)
-      | drop index l == [] = pure []
-      |otherwise = do
-         let l' = drop index l
-         ps <- make n $ do
-           a <- elements l'
-           pure (p,a)
-         pure (nub ps)
+    f l (p, n, index) = do
+      ps <- make n $ (do
+           a <- elements l
+           pure (p,a))
+      pure (nub ps)

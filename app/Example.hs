@@ -15,7 +15,7 @@ X TextPost(PostID, Content)
 X VideoPost(PostID, Content)
 X Likes(UserID, PostID, Date)
 X Event(EventID, Place, Date, CreatorID)
-UserEvent(UserID, EventID)
+X UserEvent(UserID, EventID)
 X Subscription(UserID, Expiration)
 X Transaction(TransactionID, Date)
 -}
@@ -80,7 +80,7 @@ videoPost pids = postType "Video" pids
 
 likes :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 likes uids pids = do
-  ps <- pairs2 pids uids -- [(uid,pid)]
+  ps <- pairs2' pids uids -- [(uid,pid)]
   dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
   let (pids', uids') = unzip ps
   pure . statements $ map f $ zip3 pids' uids' dates
@@ -89,7 +89,7 @@ likes uids pids = do
 
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
-  ps <- pairs2 eids uids
+  ps <- pairs2' eids uids
   dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
   places <- make (length ps) $ place
   let (eids', uids') = unzip ps
@@ -98,7 +98,11 @@ event eids uids = do
     f (e, p, d, u) = insertStatement "Event" ["EventID","Place","Date","CreatorID"] [e,p,d,u]
 
 userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
-userEvent uids eids = undefined
+userEvent uids eids = do
+  pairs <- pairs2 (1,((length uids * 7) `div` 10)) eids uids
+  pure . statements $ map f pairs
+  where
+    f (eid,uid) = insertStatement "userEvent" ["UserId","EventId"] [uid,eid]
 
 subscription :: [PSQLTYPE] -> Gen InsertStatement
 subscription uids = do
