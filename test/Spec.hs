@@ -26,6 +26,13 @@ nonReflexivityProp = do
   list <- pairs (10,100) l
   pure $ (length list) == (length $ filter (\(a,b) -> (b,a) `notElem` list) list)
 
+pair'Test = do
+  k1 <- generate $ primaryKeys 10
+  k2 <- generate $ primaryKeys 5
+  list <- generate $ pairs2' (1,10) k1 k2
+  mapM_ (\(b,c) -> putStrLn$ (showPSQLTYPE b) ++ ","++(showPSQLTYPE c))   list
+
+
 testFriend = do
   ks <- generate $ primaryKeys 5
   pretty $ friend ks
