@@ -18,14 +18,26 @@ data PSQLTYPE
   = VARCHAR String
   | DATE (Int, Int, Int) -- year, month, day
   | INTEGER Int
+  | TIMESTAMP (Int,Int,Int) (Int,Int,Int) Int Bool
+    -- (year,month,day) (hour,minute,second) timezone includeTimeZone
   deriving (Eq,Show)
 
 showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of
       VARCHAR s -> s
-      DATE (y,m,d) -> show y ++ "-"++show m++"-"++show d
+      DATE (y,m,d) -> showDate y m d
       INTEGER i -> show i
+      TIMESTAMP (y,m,d) (h,min,s) t b -> showDate y m d ++ " "
+                                         ++ showTime h min s ++ showTimezone t b
+    where
+      showDate y m d = show y ++ "-"++show m++"-"++show d
+      showTime h m s = show h ++ ":" ++ show m ++":"++ show s
+      showTimezone t b | b && (t < 10 && t > (0))  = "+0"++show t
+                       | b && (t > (-10) && t < 0)  = "-0"++show (abs t)
+                       | b && (t > 9)  = "+"++show t
+                       | b = show t
+                       | otherwise = ""
 
 
 --------------------------------------------------------------------------------
