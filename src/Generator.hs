@@ -31,13 +31,15 @@ showPSQLTYPE t
       TIMESTAMP (y,m,d) (h,min,s) t b -> showDate y m d ++ " "
                                          ++ showTime h min s ++ showTimezone t b
     where
-      showDate y m d = show y ++ "-"++show m++"-"++show d
-      showTime h m s = show h ++ ":" ++ show m ++":"++ show s
+      showDate y m d = show y ++ "-"++showDD m++"-"++showDD d
+      showTime h m s = showDD h ++ ":" ++ showDD m ++":"++ showDD s
       showTimezone t b | b && (t < 10 && t > (0))  = "+0"++show t
                        | b && (t > (-10) && t < 0)  = "-0"++show (abs t)
                        | b && (t > 9)  = "+"++show t
                        | b = show t
                        | otherwise = ""
+      showDD i | i < 10 = "0" ++ show i
+               | otherwise = show i
 
 
 --------------------------------------------------------------------------------
@@ -53,6 +55,8 @@ psqlDate d = DATE d
 psqlInteger :: Int -> PSQLTYPE
 psqlInteger n = INTEGER n
 
+psqlTimestamp :: (Int,Int,Int) -> (Int,Int,Int) -> Int -> Bool -> PSQLTYPE
+psqlTimestamp ymd hms t b = TIMESTAMP ymd hms t b
 --------------------------------------------------------------------------------
 -- * Process PSQLTYPE Data
 --------------------------------------------------------------------------------
@@ -149,7 +153,16 @@ dateBetween (fy,fm,fd) (ty,tm,td) = do
   date <- elements $ enumFromTo from to
   let (y,m,d) = toGregorian date
   pure . psqlDate $ (fromInteger y,  m,  d)
-     
+
+-- | Provides a random timestamp between two dates, the time is random though
+timestampBetween :: (Int,Int,Int) -> (Int,Int,Int) -> Gen PSQLTYPE
+timestampBetween from to = do
+  hour <- elements [0,1..23]
+  min <- elements [0,1..59]
+  dymd <- dateBetween from to
+  case dymd of
+    DATE ymd -> pure $ psqlTimestamp ymd (hour,min,0) 0 False
+
 
 url :: String -> PSQLTYPE ->Gen PSQLTYPE
 url t (INTEGER i) = pure . psqlVarchar $ "\"http://kthsocial.com/"
