@@ -26,3 +26,4 @@ prettyPrintIS (IS schemaName as vs) =
 
 debugPSQLList i g = do l <- generate $ g i; mapM_ (putStrLn . showPSQLTYPE) l
 debugPSQL g = do a <- generate g; putStrLn $ showPSQLTYPE a
+debugPSQL' i g = do l <- generate $ make i g; mapM_ (putStrLn . showPSQLTYPE) l

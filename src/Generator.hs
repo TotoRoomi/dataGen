@@ -163,6 +163,25 @@ timestampBetween from to = do
   case dymd of
     DATE ymd -> pure $ psqlTimestamp ymd (hour,min,0) 0 False
 
+-- | Generates two timestamps on the same day but hours between each other
+eventTimeStampsBetween :: (Int,Int,Int) -> (Int,Int,Int) -> Gen (PSQLTYPE,PSQLTYPE)
+eventTimeStampsBetween from to = do
+  randomIndex <- chooseInt (0,22)
+  let hour = [0,1..23] !! randomIndex -- choose a random index
+  hour2 <- elements (drop (randomIndex+1) [0,1..23]) -- choose a random hour from the remaining hours
+  minute <- elements [0,15,30,45]
+  minute2 <- elements [0,15,30,45]
+  dymd <- dateBetween from to
+  case dymd of
+    DATE ymd -> pure $ ( psqlTimestamp ymd (hour,minute,0) 0 False
+                       , psqlTimestamp ymd (hour2,minute2,0) 0 False
+                       )
+eventTitle :: Gen PSQLTYPE
+eventTitle = do
+  adj <- elements adjective
+  event <- elements activity
+  let s = adj ++ " " ++ event
+  pure $ psqlVarchar s
 
 url :: String -> PSQLTYPE ->Gen PSQLTYPE
 url t (INTEGER i) = pure . psqlVarchar $ "\"http://kthsocial.com/"

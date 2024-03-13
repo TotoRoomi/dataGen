@@ -698,3 +698,34 @@ address
     ,"Valhallavägen 91T"
     ,"Valhallavägen 95"
     ]
+
+
+adjective
+  = ["Funny"
+    ,"Fun"
+    ,"Serious"
+    ,"Comedic"
+    ,"Summer vibes"
+    ,"Delightful"
+    ,"Weird"
+    ,"Crazy"
+    ,"Hot"
+    ,"Sexy"
+    ,"Extravagant"
+    ,"Kinky"
+    ,"Naked"
+    ,"Fancy"
+    ]
+activity
+ = ["wine tasting"
+   ,"dinner party"
+   ,"pub"
+   ,"life drawing"
+   ,"arts and crafts"
+   ,"movie viewing"
+   ,"board games"
+   ,"party"
+   ,"pizza party"
+   ,"rave"
+   ,"tenta pub"
+   ]

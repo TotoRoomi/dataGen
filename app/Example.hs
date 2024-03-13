@@ -15,7 +15,7 @@ import Pretty
  TextPost(PostID, Content)
  VideoPost(PostID, Content)
  Likes(UserID, PostID, Date)
- Event(EventID, Place, Date, CreatorID)
+ Event(EventID, Place, SDate, EDate, CreatorID, Title)
  UserEvent(UserID, EventID)
  Subscription(UserID, Expiration)
  Transaction(TransactionID, Date)
@@ -108,6 +108,7 @@ likes uids pids = do
   where
     f (p,u,d) = insertStatement "Likes" ["UserID", "PostID", "Date"] [u,p,d]
 
+-- Event(EventID, Place, SDate, EDate, CreatorID, Title)
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
   ps <- pairs2' eids uids
@@ -116,7 +117,7 @@ event eids uids = do
   let (eids', uids') = unzip ps
   pure . statements $ map f $ zip4 eids' places dates uids'
   where
-    f (e, p, d, u) = insertStatement "Event" ["EventID","Place","Date","CreatorID"] [e,p,d,u]
+    f (e, p, d, u) = insertStatement "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [e,p,d,u]
 
 userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 userEvent uids eids = do
