@@ -29,7 +29,12 @@ statements :: [InsertStatement] -> InsertStatement
 statements iss = Statements iss
 
 insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
-insert s as pss = statements $ map (insertStatement s as) pss
+insert s as pss = statements $ map (insertStatement s as) (listZip pss)
+
+listZip :: [[PSQLTYPE]] -> [[PSQLTYPE]]
+listZip l = go l [] where
+  go ([]:_) acc = acc
+  go l acc = go (map (drop 1) l) (map head l : acc)
 --------------------------------------------------------------------------------
 -- | Statement generators
 --------------------------------------------------------------------------------

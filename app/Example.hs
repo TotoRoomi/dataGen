@@ -55,10 +55,8 @@ user uids = do
   let n = length uids
   fns <- firstnames n
   lns <- lastnames n
-  pure $ statements $ map makeUser (zip3 uids fns lns)
-  where
-    makeUser (pm,fn,sn) =
-      insertStatement "user" ["userId","name"] [pm,name2 fn sn]
+  let names = zipWith name2 fns lns
+  pure $ insert "user" ["userId","name"] [uids,names]
 
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
