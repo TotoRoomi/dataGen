@@ -100,10 +100,12 @@ likes uids pids = do
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
   ps <- pairs2' eids uids
-  dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
-  places <- make (length ps) $ place
+  let n = length ps
+  dates <- make n $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  places <- make n $ place
   let (eids', uids') = unzip ps
-  pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, dates, uids]
+  titles <- make n eventTitle
+  pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, dates, uids, titles]
 
 userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 userEvent uids eids = do

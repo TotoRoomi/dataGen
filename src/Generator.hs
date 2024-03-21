@@ -5,7 +5,7 @@ module Generator where
 import Data
 import Test.QuickCheck
 import Data.List(intercalate, nub, nubBy)
-import Data.Char(toUpper)
+import Data.Char(toUpper,toLower)
 import Control.Monad(replicateM)
 import Data.Time.Calendar
 
@@ -25,7 +25,7 @@ data PSQLTYPE
 showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of
-      VARCHAR s -> s
+      VARCHAR s -> "\""++s++"\""
       DATE (y,m,d) -> showDate y m d
       INTEGER i -> show i
       TIMESTAMP (y,m,d) (h,min,s) t b -> showDate y m d ++ " "
@@ -181,24 +181,28 @@ eventTitle = do
   adj <- elements adjective
   event <- elements activity
   let s = adj ++ " " ++ event
-  pure $ psqlVarchar s
+  pure . psqlVarchar $ "\""++s++"\""
 
 url :: String -> PSQLTYPE ->Gen PSQLTYPE
-url t (INTEGER i) = pure . psqlVarchar $ "\"http://kthsocial.com/"
+url t (INTEGER i) = pure . psqlVarchar $ "http://kthsocial.com/"
                            ++ t++"/"
                            ++ show ( i * i)
-                           ++ "\""
 
 tagList :: Gen PSQLTYPE
 tagList = do
   n <- chooseInt (1,20)
   ts <- unique n (elements tag)
-  pure . psqlVarchar $ "\""++ intercalate " " ts ++ "\""
+  pure . psqlVarchar $ intercalate " " ts
 
 place :: Gen PSQLTYPE
 place = do
   a <- elements address
-  pure . psqlVarchar $ "\""++a++"\""
+  pure . psqlVarchar $a
+
+imfeeling :: Gen PSQLTYPE
+imfeeling = do
+  e <- elements emotion
+  pure . psqlVarchar $ "I'm feeling "++(map toLower e)
 
 --test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 --test2 = do a<- generate $ insertUser; putStrLn a
