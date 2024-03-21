@@ -61,32 +61,24 @@ user uids = do
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
   -- at least 2 friends, at most half of all the users
-  l <- pairs (2, (length uids `div` 2)) uids -- [(uid,fid)]
-  pure $ statements $ map f l
-  where
-    f (uid,fid)= insertStatement "Friend" ["UserId","FriendID"] [uid,fid]
-
+  l <- pairs (2, (length uids `div` 2)) uids -- [[fid][uid]]
+  pure $ insert "Friend" ["UserId","FriendID"] l
+  
 post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 post pids uids = do
   dates <- make (length uids * 100) $ date 2024
   uids' <- make (length pids) $ elements uids
-  pure $ statements $ map f $ zip3 pids dates uids'
-  where
-    f (pid,d,uid) = insertStatement "Post" ["PostID", "Date", "UserId"] [pid,d,uid]
+  pure $ insert "Post" ["PostID", "Date", "UserId"] [pids, dates, uids']
 
 postTag :: [PSQLTYPE] -> Gen InsertStatement
 postTag pids = do
   tags <- sequence (replicate (length pids) tagList)
-  pure $ statements $ map f $ zip pids tags
-  where
-    f (id, tag) = insertStatement "PostTag" ["PostID","Tag"] [id,tag]
+  pure $ insert "PostTag" ["PostID","Tag"] [pids,tags]
 
 postType :: String -> [PSQLTYPE] -> Gen InsertStatement
 postType posttype pids = do
   contents <- mapM (url posttype) pids
-  pure $ statements $ map f $ zip pids contents
-  where
-    f (id, content) = insertStatement "TextPost" ["PostID","Content"] [id,content]
+  pure $ insert "TextPost" ["PostID","Content"] [pids,contents]
 
 textPost :: [PSQLTYPE] -> Gen InsertStatement
 textPost pids = postType "Text" pids
@@ -102,9 +94,7 @@ likes uids pids = do
   ps <- pairs2' pids uids -- [(uid,pid)]
   dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
   let (pids', uids') = unzip ps
-  pure . statements $ map f $ zip3 pids' uids' dates
-  where
-    f (p,u,d) = insertStatement "Likes" ["UserID", "PostID", "Date"] [u,p,d]
+  pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids,pids,dates]
 
 -- Event(EventID, Place, SDate, EDate, CreatorID, Title)
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
@@ -113,30 +103,22 @@ event eids uids = do
   dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
   places <- make (length ps) $ place
   let (eids', uids') = unzip ps
-  pure . statements $ map f $ zip4 eids' places dates uids'
-  where
-    f (e, p, d, u) = insertStatement "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [e,p,d,u]
+  pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, dates, uids]
 
 userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 userEvent uids eids = do
   pairs <- pairs2 (1,((length uids * 7) `div` 10)) eids uids
-  pure . statements $ map f pairs
-  where
-    f (eid,uid) = insertStatement "userEvent" ["UserId","EventId"] [uid,eid]
+  pure $ insert "userEvent" ["UserId","EventId"] pairs
 
 subscription :: [PSQLTYPE] -> Gen InsertStatement
 subscription uids = do
   n <- chooseInt ((length uids `div` 2), ((length uids * 9 ) `div` 10)) -- mellan hälften och 90% som betalar
-  let l = take n uids
+  let uids' = take n uids
   dates <- make n $ date 2024
-  pure $ statements $ map f $ zip l dates
-  where
-    f (id, d) = insertStatement "Subscription" ["UserID","Date"] [id,d]
+  pure $ insert "Subscription" ["UserID","Date"] [uids', dates]
 
 transaction :: Int -> Gen InsertStatement
 transaction n = do
-  primaryKeys <- primaryKeys n
+  tids <- primaryKeys n
   dates <- make n $ date 2024
-  pure $ statements $ map f $ zip primaryKeys dates
-  where
-    f (k,d) = insertStatement "Transaction" ["TransactionID","Date"] [k,d]
+  pure $ insert "Transaction" ["TransactionID","Date"] [tids, dates]

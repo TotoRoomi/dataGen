@@ -31,20 +31,23 @@ statements iss = Statements iss
 insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
 insert s as pss = statements $ map (insertStatement s as) (listZip pss)
 
+-- TODO guard and give an error if any list is of a different length
 listZip :: [[PSQLTYPE]] -> [[PSQLTYPE]]
 listZip l = go l [] where
   go ([]:_) acc = acc
   go l acc = go (map (drop 1) l) (map head l : acc)
+
 --------------------------------------------------------------------------------
 -- | Statement generators
 --------------------------------------------------------------------------------
 -- | Create non reflexive pairs from one list of keys
-pairs :: (Int,Int) -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs :: (Int,Int) -> [PSQLTYPE] -> Gen [[PSQLTYPE]]
 pairs ft l = do
   ns <- make (length l) $ chooseInt ft
   let ln = zip3 l ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
   pairs <- mapM (f l) ln
-  pure . concat $ pairs
+  let (a,b) = unzip . concat $ pairs
+  pure [a,b]
   where
     f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen [(PSQLTYPE,PSQLTYPE)]
     f l (p, n, index)
@@ -71,12 +74,13 @@ pairs2' k1 k2 = do
 
 -- | For each key in the first list choose
 --   up to n random and unique keys in the second list.
-pairs2 :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [(PSQLTYPE,PSQLTYPE)]
+pairs2 :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [[PSQLTYPE]]
 pairs2 ft k1 k2 = do
   ns <- make (length k1) $ chooseInt ft
   let k1n = zip3 k1 ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
   pairs <- mapM (f k2) k1n
-  pure . concat $ pairs
+  let (l1,l2) = unzip . concat $ pairs
+  pure [l1,l2]
   where
     f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen [(PSQLTYPE,PSQLTYPE)]
     f l (p, n, index) = do
