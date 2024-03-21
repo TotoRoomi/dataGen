@@ -49,6 +49,10 @@ showPSQLTYPE t
 psqlVarchar :: String -> PSQLTYPE
 psqlVarchar s = VARCHAR s
 
+unVarchar :: PSQLTYPE -> String
+unVarchar s = case s of
+  VARCHAR a -> a
+
 psqlDate :: (Int,Int,Int) -> PSQLTYPE
 psqlDate d = DATE d
 
@@ -57,6 +61,7 @@ psqlInteger n = INTEGER n
 
 psqlTimestamp :: (Int,Int,Int) -> (Int,Int,Int) -> Int -> Bool -> PSQLTYPE
 psqlTimestamp ymd hms t b = TIMESTAMP ymd hms t b
+
 --------------------------------------------------------------------------------
 -- * Process PSQLTYPE Data
 --------------------------------------------------------------------------------
@@ -181,7 +186,7 @@ eventTitle = do
   adj <- elements adjective
   event <- elements activity
   let s = adj ++ " " ++ event
-  pure . psqlVarchar $ "\""++s++"\""
+  pure . psqlVarchar $ s
 
 url :: String -> PSQLTYPE ->Gen PSQLTYPE
 url t (INTEGER i) = pure . psqlVarchar $ "http://kthsocial.com/"
@@ -199,11 +204,64 @@ place = do
   a <- elements address
   pure . psqlVarchar $a
 
+-------------- Text -----------------
+
+toSentance :: [String] -> String
+toSentance l = toUpperFirst . (map toLower) . (intercalate " ") $ l
+
+toUpperFirst :: String -> String
+toUpperFirst s = (toUpper $ head s) : drop 1 s
+
 imfeeling :: Gen PSQLTYPE
 imfeeling = do
   e <- elements emotion
   pure . psqlVarchar $ "I'm feeling "++(map toLower e)
 
+makesmefeel :: Gen PSQLTYPE
+makesmefeel = do
+  e <- elements emotion
+  pure . psqlVarchar $ "That makes me feel "++(map toLower e)
+
+simpleSentance :: Gen PSQLTYPE
+simpleSentance = do
+  np1 <- elements nounphrase
+  pred <- elements predicate
+  prep <- elements preposition
+  np2 <- elements nounphrase
+  pure . psqlVarchar . toSentance $ [np1,pred,prep,np2]
+
+simpleSentance2 :: Gen PSQLTYPE
+simpleSentance2 = do
+  np1 <- elements nounphrase
+  verb <- elements verb
+  np2 <- elements nounphrase
+  pure . psqlVarchar . toSentance $ [np1,verb,np2]
+
+feelabout :: Gen PSQLTYPE
+feelabout = do
+  f <- imfeeling
+  e <- eventTitle
+  pure . psqlVarchar . toSentance $ [(unVarchar f),"about the",(unVarchar e),"event."]
+
+tweet :: Gen PSQLTYPE
+tweet = do
+  t <- elements tweets
+  pure . psqlVarchar $ t
+
+sentanceAnd :: Gen PSQLTYPE -> Gen PSQLTYPE -> Gen PSQLTYPE
+sentanceAnd f g = do
+  a <- f
+  b <- g
+  pure . psqlVarchar $ (unVarchar a)++". "++(unVarchar b)++"."
+
+text :: Gen PSQLTYPE
+text = oneof [simpleSentance
+             ,simpleSentance2
+             ,(sentanceAnd simpleSentance makesmefeel)
+             ,(sentanceAnd simpleSentance2 makesmefeel)
+             ,imfeeling
+             ,feelabout
+             ]
 --test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 --test2 = do a<- generate $ insertUser; putStrLn a
 --testFriend n= do a <- generate$ insertFriend n; mapM_ ( putStrLn) a
