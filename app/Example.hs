@@ -11,9 +11,9 @@ import Pretty
  Friend(UserID, FriendID)
  Post(PostID, Date, UserID)
  PostTag(PostID, Tag)
- ImagePost(PostID, Content, Filter)
- TextPost(PostID, Content)
- VideoPost(PostID, Content)
+ ImagePost(PostID, URL, Filter)
+ TextPost(PostID, Text)
+ VideoPost(PostID, URL, Codec)
  Likes(UserID, PostID, Date)
  Event(EventID, Place, SDate, EDate, CreatorID, Title)
  UserEvent(UserID, EventID)
@@ -29,16 +29,16 @@ printAllInserts = do
   -- Generate inserts
   pretty $ user userIDs
   pretty $  friend userIDs
-  pretty $ post postIDs userIDs
+  pretty $ post postIDs userIDs -- date
   pretty $ postTag postIDs
   pretty $ textPost (take 500 postIDs)
   pretty $ imagePost (take 300 $ drop 500 postIDs)
   pretty $ videoPost (drop 800 postIDs)
-  pretty $ likes userIDs postIDs
-  pretty $ event eventIDs userIDs
+  pretty $ likes userIDs postIDs -- date
+  pretty $ event eventIDs userIDs --date
   pretty $ userEvent userIDs eventIDs
-  pretty $ subscription userIDs
-  pretty $ transaction 100
+  pretty $ subscription userIDs --date
+  pretty $ transaction 100 --date
 
 
 exampleUser :: Gen InsertStatement
@@ -75,19 +75,52 @@ postTag pids = do
   tags <- sequence (replicate (length pids) tagList)
   pure $ insert "PostTag" ["PostID","Tag"] [pids,tags]
 
-postType :: String -> [PSQLTYPE] -> Gen InsertStatement
-postType posttype pids = do
-  contents <- mapM (url posttype) pids
-  pure $ insert "TextPost" ["PostID","Content"] [pids,contents]
-
 textPost :: [PSQLTYPE] -> Gen InsertStatement
-textPost pids = postType "Text" pids
+textPost pids = do
+  texts <- make (length pids) goodText
+  pure $ insert "TextPost" ["PostID","Text"] [pids,texts]
 
 imagePost :: [PSQLTYPE] -> Gen InsertStatement
-imagePost pids = postType "Image" pids
+imagePost pids = do
+  urls <- mapM (url "image") pids
+  fs <- make (length pids) $ elements ["Normal (no filter)"
+                                      ,"Black and White"
+                                      ,"Sepia"
+                                      ,"Vintage"
+                                      ,"Retro"
+                                      ,"Vignette"
+                                      ,"Grayscale"
+                                      ,"Duotone"
+                                      ,"High Contrast"
+                                      ,"Low Contrast"
+                                      ,"Saturation"
+                                      ,"Desaturation"
+                                      ,"Cross-Processing"
+                                      ,"HDR"
+                                      ,"Soft Focus"
+                                      ,"Sharpen"
+                                      ,"Blur"
+                                      ,"Tilt-Shift"
+                                      ,"Matte"
+                                      ,"Warmth"
+                                       "Coolness"]
+  let filters = map psqlVarchar fs
+  pure $ insert "ImagePost" ["PostID","URL","Filter"] [pids,urls,filters]
 
 videoPost :: [PSQLTYPE] -> Gen InsertStatement
-videoPost pids = postType "Video" pids
+videoPost pids = do
+  urls <-  mapM (url "video") pids
+  cs <- make (length pids) $ elements ["AVC"
+                                      ,"H.264" -- AVC
+                                      ,"HEVC"
+                                      ,"H.265" -- HEVC
+                                      ,"VP9"
+                                      ,"AV1"
+                                      ,"MPEG-4"
+                                      ,"Theora"
+                                      ,"VP8"]
+  let codecs = map psqlVarchar cs
+  pure $ insert "VideoPost" ["PostID", "URL", "Codec"] [pids,urls,codecs]
 
 likes :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 likes uids pids = do
@@ -101,11 +134,12 @@ event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
   ps <- pairs2' eids uids
   let n = length ps
-  dates <- make n $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  ds <- make n $ eventTimestampBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  let (sdates,edates) = unzip ds
   places <- make n $ place
   let (eids', uids') = unzip ps
   titles <- make n eventTitle
-  pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, dates, uids, titles]
+  pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, sdates, edates, uids, titles]
 
 userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 userEvent uids eids = do

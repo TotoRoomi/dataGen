@@ -1191,7 +1191,6 @@ nounphrase
     ,"A gentle breeze"
     ,"The starry sky"
     ,"A sparkling diamond"
-    ,"Laughing children"
     ,"A giant tree"
     ,"A wandering soul"
     ,"Lost treasure"

@@ -26,10 +26,10 @@ showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of
       VARCHAR s -> "\""++s++"\""
-      DATE (y,m,d) -> showDate y m d
+      DATE (y,m,d) -> "\""++showDate y m d++"\""
       INTEGER i -> show i
-      TIMESTAMP (y,m,d) (h,min,s) t b -> showDate y m d ++ " "
-                                         ++ showTime h min s ++ showTimezone t b
+      TIMESTAMP (y,m,d) (h,min,s) t b -> "\""++showDate y m d ++ " "
+                                         ++ showTime h min s ++ showTimezone t b++"\""
     where
       showDate y m d = show y ++ "-"++showDD m++"-"++showDD d
       showTime h m s = showDD h ++ ":" ++ showDD m ++":"++ showDD s
@@ -169,8 +169,8 @@ timestampBetween from to = do
     DATE ymd -> pure $ psqlTimestamp ymd (hour,min,0) 0 False
 
 -- | Generates two timestamps on the same day but hours between each other
-eventTimeStampsBetween :: (Int,Int,Int) -> (Int,Int,Int) -> Gen (PSQLTYPE,PSQLTYPE)
-eventTimeStampsBetween from to = do
+eventTimestampBetween :: (Int,Int,Int) -> (Int,Int,Int) -> Gen (PSQLTYPE,PSQLTYPE)
+eventTimestampBetween from to = do
   randomIndex <- chooseInt (0,22)
   let hour = [0,1..23] !! randomIndex -- choose a random index
   hour2 <- elements (drop (randomIndex+1) [0,1..23]) -- choose a random hour from the remaining hours
@@ -262,6 +262,13 @@ text = oneof [simpleSentance
              ,imfeeling
              ,feelabout
              ]
+goodText :: Gen PSQLTYPE
+goodText =  oneof [simpleSentance2
+                  ,(sentanceAnd simpleSentance2 makesmefeel)
+                  ,imfeeling
+                  ,feelabout
+                  ,tweet
+                  ]
 --test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
 --test2 = do a<- generate $ insertUser; putStrLn a
 --testFriend n= do a <- generate$ insertFriend n; mapM_ ( putStrLn) a
