@@ -4,7 +4,6 @@ module Example where
 import Test.QuickCheck
 import Populator
 import Generator
-import Data.List(zip4)
 import Pretty
 {-
  User(UserID, Name)
@@ -22,10 +21,11 @@ import Pretty
 -}
 
 printAllInserts = do
-  -- All primaryKeys
+  -- Setup
   userIDs <- generate $ primaryKeys 100
   postIDs <- generate $ primaryKeys 1000
   eventIDs <- generate $ primaryKeys 25
+  postDates <- generate $ make 1000 $ dateBetween (2024,1,1) (2024,12,1)
   -- Generate inserts
   pretty $ user userIDs
   pretty $  friend userIDs
@@ -34,9 +34,9 @@ printAllInserts = do
   pretty $ textPost (take 500 postIDs)
   pretty $ imagePost (take 300 $ drop 500 postIDs)
   pretty $ videoPost (drop 800 postIDs)
-  pretty $ likes userIDs postIDs -- date
+  pretty $ likes userIDs postIDs postDates -- date -- MAP TO POSTS
   pretty $ event eventIDs userIDs --date
-  pretty $ userEvent userIDs eventIDs
+  pretty $ attending userIDs eventIDs
   pretty $ subscription userIDs --date
   pretty $ transaction 100 --date
 
@@ -83,28 +83,7 @@ textPost pids = do
 imagePost :: [PSQLTYPE] -> Gen InsertStatement
 imagePost pids = do
   urls <- mapM (url "image") pids
-  fs <- make (length pids) $ elements ["Normal (no filter)"
-                                      ,"Black and White"
-                                      ,"Sepia"
-                                      ,"Vintage"
-                                      ,"Retro"
-                                      ,"Vignette"
-                                      ,"Grayscale"
-                                      ,"Duotone"
-                                      ,"High Contrast"
-                                      ,"Low Contrast"
-                                      ,"Saturation"
-                                      ,"Desaturation"
-                                      ,"Cross-Processing"
-                                      ,"HDR"
-                                      ,"Soft Focus"
-                                      ,"Sharpen"
-                                      ,"Blur"
-                                      ,"Tilt-Shift"
-                                      ,"Matte"
-                                      ,"Warmth"
-                                       "Coolness"]
-  let filters = map psqlVarchar fs
+  filters <- make (length pids) imageFilter
   pure $ insert "ImagePost" ["PostID","URL","Filter"] [pids,urls,filters]
 
 videoPost :: [PSQLTYPE] -> Gen InsertStatement
@@ -122,12 +101,22 @@ videoPost pids = do
   let codecs = map psqlVarchar cs
   pure $ insert "VideoPost" ["PostID", "URL", "Codec"] [pids,urls,codecs]
 
-likes :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
-likes uids pids = do
+likes' :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+likes' uids pids = do
   ps <- pairs2' pids uids -- [(uid,pid)]
   dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
   let (pids', uids') = unzip ps
   pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids,pids,dates]
+
+likes :: [PSQLTYPE] -> [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+likes uids pids ds = do
+  (ns, pairLists) <- forEachKeyMakePairs (0,length uids) pids uids
+  d <- forEachDateMakeDates ds ns
+  let dates = concat d
+  let uids' = head . tail $ pairLists
+  let pids' = head pairLists
+  pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids',pids',dates]
+
 
 -- Event(EventID, Place, SDate, EDate, CreatorID, Title)
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
@@ -141,10 +130,10 @@ event eids uids = do
   titles <- make n eventTitle
   pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, sdates, edates, uids, titles]
 
-userEvent :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
-userEvent uids eids = do
+attending :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+attending uids eids = do
   pairs <- pairs2 (1,((length uids * 7) `div` 10)) eids uids
-  pure $ insert "userEvent" ["UserId","EventId"] pairs
+  pure $ insert "Attending" ["UserId","EventId"] pairs
 
 subscription :: [PSQLTYPE] -> Gen InsertStatement
 subscription uids = do

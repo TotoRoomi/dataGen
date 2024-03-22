@@ -220,6 +220,29 @@ tag
     ,"#artjournal"
     ]
 
+imagefilter
+  = ["Normal (no filter)"
+    ,"Black and White"
+    ,"Sepia"
+    ,"Vintage"
+    ,"Retro"
+    ,"Vignette"
+    ,"Grayscale"
+    ,"Duotone"
+    ,"High Contrast"
+    ,"Low Contrast"
+    ,"Saturation"
+    ,"Desaturation"
+    ,"Cross-Processing"
+    ,"HDR"
+    ,"Soft Focus"
+    ,"Sharpen"
+    ,"Blur"
+    ,"Tilt-Shift"
+    ,"Matte"
+    ,"Warmth"
+    , "Coolness"]
+
 
 address
   = ["Brinellvägen 1"

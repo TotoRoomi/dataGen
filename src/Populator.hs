@@ -76,15 +76,33 @@ pairs2' k1 k2 = do
 --   up to n random and unique keys in the second list.
 pairs2 :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen [[PSQLTYPE]]
 pairs2 ft k1 k2 = do
+  a <- forEachKeyMakePairs ft k1 k2
+  pure . snd $ a
+
+-- | For each key in the first list choose
+--   up to n random and unique keys in the second list.
+forEachKeyMakePairs :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE] -> Gen ([Int],[[PSQLTYPE]])
+forEachKeyMakePairs ft k1 k2 = do
   ns <- make (length k1) $ chooseInt ft
   let k1n = zip3 k1 ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
-  pairs <- mapM (f k2) k1n
+  nrAndPairs <- mapM (f k2) k1n -- [(Int,[(p,p)])]
+  let (nrs,pairs) = unzip nrAndPairs
   let (l1,l2) = unzip . concat $ pairs
-  pure [l1,l2]
+  pure (nrs,[l1,l2])
   where
-    f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen [(PSQLTYPE,PSQLTYPE)]
+    f :: [PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen (Int,[(PSQLTYPE,PSQLTYPE)])
     f l (p, n, index) = do
       ps <- make n $ (do
            a <- elements l
            pure (p,a))
-      pure (nub ps)
+      let ps' = nub ps
+      pure (length ps',ps')
+
+-- test that dates are actually made after the intial dates
+forEachDateMakeDates :: [PSQLTYPE] -> [Int] -> Gen [[PSQLTYPE]]
+forEachDateMakeDates ds i = do
+  let fromDates = zip i (map unDate ds)
+  mapM makeToDates fromDates
+  where
+    makeToDates :: (Int,(Int,Int,Int)) -> Gen [PSQLTYPE]
+    makeToDates (i,(fy,fm,fd)) = make i $ dateBetween (fy,fm,fd) (fy+1,1,1)

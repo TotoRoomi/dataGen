@@ -56,8 +56,16 @@ unVarchar s = case s of
 psqlDate :: (Int,Int,Int) -> PSQLTYPE
 psqlDate d = DATE d
 
+unDate :: (PSQLTYPE) -> (Int,Int,Int)
+unDate p = case p of
+  DATE d -> d
+
 psqlInteger :: Int -> PSQLTYPE
 psqlInteger n = INTEGER n
+
+unInteger :: PSQLTYPE -> Int
+unInteger p = case p of
+  INTEGER i -> i
 
 psqlTimestamp :: (Int,Int,Int) -> (Int,Int,Int) -> Int -> Bool -> PSQLTYPE
 psqlTimestamp ymd hms t b = TIMESTAMP ymd hms t b
@@ -201,8 +209,12 @@ tagList = do
 
 place :: Gen PSQLTYPE
 place = do
-  a <- elements address
-  pure . psqlVarchar $a
+  p <- elements address
+  pure . psqlVarchar $ p
+
+imageFilter = do
+  f <- elements imagefilter
+  pure . psqlVarchar $ f
 
 -------------- Text -----------------
 
