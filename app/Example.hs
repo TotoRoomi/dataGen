@@ -29,16 +29,16 @@ printAllInserts = do
   -- Generate inserts
   pretty $ user userIDs
   pretty $  friend userIDs
-  pretty $ post postIDs userIDs -- date
+  pretty $ post postIDs userIDs
   pretty $ postTag postIDs
   pretty $ textPost (take 500 postIDs)
   pretty $ imagePost (take 300 $ drop 500 postIDs)
   pretty $ videoPost (drop 800 postIDs)
-  pretty $ likes userIDs postIDs postDates -- date -- MAP TO POSTS
-  pretty $ event eventIDs userIDs --date
+  pretty $ likes userIDs postIDs postDates
+  pretty $ event eventIDs userIDs
   pretty $ attending userIDs eventIDs
-  pretty $ subscription userIDs --date
-  pretty $ transaction 100 --date
+  pretty $ subscription userIDs
+  pretty $ transaction 100
 
 
 exampleUser :: Gen InsertStatement
