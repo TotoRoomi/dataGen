@@ -61,7 +61,7 @@ user uids = do
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
   -- at least 2 friends, at most half of all the users
-  l <- pairs (2, (length uids `div` 2)) uids -- [[fid][uid]]
+  l <- selfRefPairs' ((length uids) `div` 2) uids -- [[fid][uid]]
   pure $ insert "Friend" ["UserId","FriendID"] l
   
 post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
@@ -132,7 +132,7 @@ event eids uids = do
 
 attending :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 attending uids eids = do
-  pairs <- pairs2 (1,((length uids * 7) `div` 10)) eids uids
+  pairs <- forEachKeyMakePairs' (1,((length uids * 7) `div` 10)) eids uids
   pure $ insert "Attending" ["UserId","EventId"] pairs
 
 subscription :: [PSQLTYPE] -> Gen InsertStatement
