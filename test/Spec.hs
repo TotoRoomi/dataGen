@@ -3,7 +3,7 @@ import Test.QuickCheck
 import Populator
 import Generator
 import Pretty
-import Data.List(notElem,nub)
+import Data.List(notElem,nub, findIndices)
 import Control.Exception (evaluate)
 
 main :: IO ()
@@ -26,12 +26,13 @@ main = hspec $ do
         selfRefPairsNonReflexive keys pairs
       it "unique elements" $ do
         selfRefPairsUnique keys pairs
-      it "Each key gets paired at least once" $ do
+
+      it "no key gets more than the max nr of pairings" $ do
         -- This currently returns false because I haven't
         -- figured out a way to do it that works with a
         -- varying (from,to) requirement. It's always
         -- gonna be ok with (0,n) but (N,n) is not gonna work.
-        selfRefPairsOccursAtLeastOnce keys pairs
+        selfRefPairsMaxPairings keys pairs 100
 
 
 
@@ -46,11 +47,18 @@ selfRefPairsUnique keys pairs = do
    let l = zip (head pairs) (head . tail $ pairs)
    length (nub l) `shouldBe` length (head pairs)
 
-selfRefPairsOccursAtLeastOnce :: [PSQLTYPE] -> [[PSQLTYPE]] -> Expectation
-selfRefPairsOccursAtLeastOnce keys pairs = do
-  let l = nub . head $ pairs
-  length l `shouldBe` length keys
---pairTest = do
+selfRefPairsMaxPairings :: [PSQLTYPE] -> [[PSQLTYPE]] -> Int -> Expectation
+selfRefPairsMaxPairings keys pairs max = do
+  let p1 = head pairs
+  let p2 = head . tail $ pairs
+  let t1 = and $ map (occurs max p1) keys
+  let t2 = and $ map (occurs max p2) keys
+  (t1,t2) `shouldSatisfy` (\x -> x == (True,True))
+  where
+    occurs max list elem = (length $ findIndices (\a-> a == elem) list) <= max
+
+
+  --pairTest = do
 --  l <- generate $ primaryKeys 100
 --  list <- generate $ pairs (1,10) l
 --  mapM_ (\(b,c) -> putStrLn$ (showPSQLTYPE b) ++ ","++(showPSQLTYPE c))   list
