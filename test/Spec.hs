@@ -5,37 +5,50 @@ import Generator
 import Pretty
 import Data.List(notElem,nub, findIndices)
 import Control.Exception (evaluate)
+import Data.Time.Calendar
 
 main :: IO ()
 main = hspec $ do
-  describe "Prelude.head" $ do
-    it "returns the first element of a list" $ do
-      head [23 ..] `shouldBe` (23 :: Int)
-
-    it "returns the first element of an *arbitrary* list" $
-      property $ \x xs -> head (x:xs) == (x :: Int)
-
-    it "throws an exception if used with an empty list" $ do
-      evaluate (head []) `shouldThrow` anyException
-
   describe "Populator" $ do
+    keys <- runIO . generate $ primaryKeys 100
+
     describe "SelfRefPairs" $ do
-      keys <- runIO . generate $ primaryKeys 100
       pairs <- runIO . generate $ selfRefPairs' 100 keys
+
       it "non-reflexivity" $
         selfRefPairsNonReflexive keys pairs
+
       it "unique elements" $ do
         selfRefPairsUnique keys pairs
 
       it "no key gets more than the max nr of pairings" $ do
-        -- This currently returns false because I haven't
-        -- figured out a way to do it that works with a
-        -- varying (from,to) requirement. It's always
-        -- gonna be ok with (0,n) but (N,n) is not gonna work.
         selfRefPairsMaxPairings keys pairs 100
 
+    describe "forEachKeyMakePairs" $ do
+      let k1 = take 50 keys
+      let k2 = drop 50 keys
+      (ns, pairs) <- runIO . generate $ forEachKeyMakePairs (1,10) k1 k2
+
+      it "max n keypairs per key" $
+        forEachKeyMaxPairs ns 10
+
+      it "unique keys for every key" $
+        forEachKeyUniqueKeys pairs
+
+    describe "forEachDateMakeDates" $ do
+      seedDates <- runIO $ generate $ make 1000 $ dateBetween (1995,6,18) (2024,6,18)
+      datesPerSeed <- runIO $ generate $ make 1000 $ chooseInt (1,1000)
+      dates <- runIO $ generate $ forEachDateMakeDates seedDates datesPerSeed
+
+      it "makes dates that are later than seed dates" $
+        makeDatesLaterThanSeed seedDates dates
+
+      it "makes n dates per seed" $
+        makeNDatesPerSeed dates datesPerSeed
 
 
+
+------------- Helpers ----------------
 selfRefPairsNonReflexive :: [PSQLTYPE] -> [[PSQLTYPE]] -> Expectation
 selfRefPairsNonReflexive keys pairs = do
   let l = zip (head pairs) (head . tail $ pairs)
@@ -57,34 +70,31 @@ selfRefPairsMaxPairings keys pairs max = do
   where
     occurs max list elem = (length $ findIndices (\a-> a == elem) list) <= max
 
+forEachKeyMaxPairs :: [Int] -> Int -> Expectation
+forEachKeyMaxPairs ns max = do
+  ns `shouldSatisfy` (\ns -> and $ map (\a-> a <= max && a >= 1) ns)
 
-  --pairTest = do
---  l <- generate $ primaryKeys 100
---  list <- generate $ pairs (1,10) l
---  mapM_ (\(b,c) -> putStrLn$ (showPSQLTYPE b) ++ ","++(showPSQLTYPE c))   list
---
---pairTest2 = do
---  l <- generate $ primaryKeys 100
---  list <- generate $ selfRefPairs' (10,100) l
---  putStrLn . show $ length list
---
---nonReflexivityProp :: Gen Bool
---nonReflexivityProp = do
---  l <- primaryKeys 100
---  list <- selfRefPairs' (10,100) l
---  pure $ (length list) == (length $ filter (\(a,b) -> (b,a) `notElem` list) list)
---
---pair2Test = do
---  k1 <- generate $ primaryKeys 10
---  k2 <- generate $ primaryKeys 5
---  list <- generate $ forEachKeyMakePairs' (1,10) k1 k2
---  mapM_ (\(b,c) -> putStrLn$ (showPSQLTYPE b) ++ ","++(showPSQLTYPE c))   list
---
---
---testPairs2 = do
---  k1 <- generate $ primaryKeys 10
---  k2 <- generate $ primaryKeys 5
---  ps <- generate $ forEachKeyMakePairs' (1,1) k1 k2
---  putStrLn $ "k1: " ++ (show $ length k1)
---          ++ " k2: " ++ (show $ length k2)
---          ++ " pairs: "++ (show $ length ps)
+
+forEachKeyUniqueKeys :: [[PSQLTYPE]] -> Expectation
+forEachKeyUniqueKeys pairs = do
+  let p1 = head pairs
+  let p2 = head . tail $ pairs
+  let zipped = zip p1 p2
+  length (nub zipped) `shouldBe` length p1
+
+makeDatesLaterThanSeed :: [PSQLTYPE] -> [[PSQLTYPE]] -> Expectation
+makeDatesLaterThanSeed sds ds = do
+  let seedDates = map (toDay . unDate) sds
+  let dates = map (map (toDay . unDate)) ds
+  let zipped = zip seedDates dates
+  zipped `shouldSatisfy` (checkDates)
+  where
+    toDay (y,m,d) = fromGregorian (toInteger y) m d
+    checkDates z = and $ map go z
+    go (seed, dates) = and $ map (\d -> seed <= d) dates
+makeNDatesPerSeed :: [[PSQLTYPE]] -> [Int] -> Expectation
+makeNDatesPerSeed dates datesPerSeed = do
+  let l = zip datesPerSeed $ map (length) dates
+  l `shouldSatisfy` checkList
+  where
+    checkList l = and $ map (\(expected,actual)-> expected == actual) l

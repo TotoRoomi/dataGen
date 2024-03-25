@@ -109,7 +109,9 @@ forEachKeyMakePairs fromTo k1 k2 = pairFactory fromTo k1 k2 f
 --   and and two lists of an unziped pair in a list.
 --   ([nr of pairs per element],[[p1],[p2]])
 pairFactory :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE]
-               -> ([PSQLTYPE] -> (PSQLTYPE,Int,Int) -> Gen (Int,[(PSQLTYPE,PSQLTYPE)]))
+               -> ([PSQLTYPE] -> (PSQLTYPE,Int,Int)
+                   -> Gen (Int,[(PSQLTYPE,PSQLTYPE)])
+                  )
                -> Gen ([Int],[[PSQLTYPE]])
 pairFactory fromTo k1 k2 f = do
   ns <- make (length k1) $ chooseInt fromTo
@@ -119,8 +121,8 @@ pairFactory fromTo k1 k2 f = do
   let (l1,l2) = unzip . concat $ pairs
   pure (nrs,[l1,l2])
 
--- | For each date in the list of dates, make a date that is later than
---   that date.
+-- | For each date in the list of dates, make a date that is equal to
+--   or later than that date.
 forEachDateMakeDates :: [PSQLTYPE] -> [Int] -> Gen [[PSQLTYPE]]
 forEachDateMakeDates ds i = do
   let fromDates = zip i (map unDate ds)

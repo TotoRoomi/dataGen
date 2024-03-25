@@ -281,6 +281,3 @@ goodText =  oneof [simpleSentance2
                   ,feelabout
                   ,tweet
                   ]
---test n = do a <-generate $  insertUsers n; mapM_ (putStrLn) a
---test2 = do a<- generate $ insertUser; putStrLn a
---testFriend n= do a <- generate$ insertFriend n; mapM_ ( putStrLn) a
