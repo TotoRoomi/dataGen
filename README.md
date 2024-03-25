@@ -161,7 +161,9 @@ friend uids = do
   pure $ insert "Friend" ["UserId","FriendID"] l
 ```
 
-The function uses 'selfRefPairs' and gives half the size of the userIDs list as the maximum number of friends a single person may have. 
+The function uses ```selfRefPairs``` and gives half the size of the userIDs list as the maximum number of friends a single person may have. 
+
+
 
 ### attends
 Attends dictates that some number of people can attend an event. 
@@ -173,7 +175,7 @@ attending uids eids = do
   pure $ insert "Attending" ["UserId","EventId"] pairs
 ```
 
-Here the function 'forEachKeyMakePairs' is used to create up to n random and unique key-pairs between eventIDs and userIDs. Here up to n random users are chosen per event. n is 70% of the userIDs. 
+Here the function ```forEachKeyMakePairs``` is used to create up to n random and unique key-pairs between eventIDs and userIDs. Here up to n random users are chosen per event. n is 70% of the userIDs. 
 
 ### textPost 
 TextPost is interesting as it gives a use case for generating random text. 
@@ -199,5 +201,6 @@ likes uids pids ds = do
   pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids',pids',dates]
 
 ```
-'forEachDateMakeDates' solves this issue by generating a date that is later than or equal to the 'seed' date. 'forrEachKeyMakePairs' returns both a list of integers and the pairs, the integers represents how many pairs each key made. This list is used in 'forEachDateMakeDates' to tell it how many dates to generate per 'seed' date. 
+
+```forEachDateMakeDates``` solves this issue by generating a date that is later than or equal to the 'seed' date. ```forEachKeyMakePairs``` returns both a list of integers and the pairs, the integers represents how many pairs each key made. This list is used in ```forEachDateMakeDates``` to tell it how many dates to generate per 'seed' date. 
 
