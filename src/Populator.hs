@@ -130,8 +130,8 @@ pairFactory :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE]
                -> Gen ([Int],[[PSQLTYPE]])
 pairFactory fromTo k1 k2 f = do
   ns <- make (length k1) $ chooseInt fromTo
-  let k1n = zip3 k1 ns [1,2..] -- [(PSQLTYPE,pairs to make,Index)]
-  nrAndPairs <- mapM (f k2) k1n -- [(Int,[(p,p)])]
+  let k1n = zip3 k1 ns [1,2..]
+  nrAndPairs <- mapM (f k2) k1n
   let (nrs,pairs) = unzip nrAndPairs
   let (l1,l2) = unzip . concat $ pairs
   pure (nrs,[l1,l2])
