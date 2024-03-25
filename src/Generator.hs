@@ -68,6 +68,7 @@ data PSQLTYPE
 instance Show PSQLTYPE where
   show = showPSQLTYPE
 
+-- | Used in the PSQLTYPE instance of Show to print
 showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of

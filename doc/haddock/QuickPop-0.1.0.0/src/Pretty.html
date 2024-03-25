@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Pretty</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Pretty.html#pretty"><span class="hs-identifier">pretty</span></a></span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Pretty.html#debugPSQLList"><span class="hs-identifier">debugPSQLList</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Pretty.html#debugPSQL"><span class="hs-identifier">debugPSQL</span></a></span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Pretty.html#debugPSQL%27"><span class="hs-identifier">debugPSQL'</span></a></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Generator.html"><span class="hs-identifier">Generator</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Populator.html"><span class="hs-identifier">Populator</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Test.QuickCheck</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">intercalate</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">toUpper</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- | Pretty print a Gen InsertStatement in the PSQL format</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   of insert statements. Can either take a collection</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--   of InsertStatement or a single one.</span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Pretty.html#pretty"><span class="hs-identifier hs-type">pretty</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span id="pretty"><span class="annot"><span class="annottext">pretty :: Gen InsertStatement -&gt; IO ()
+</span><a href="Pretty.html#pretty"><span class="hs-identifier hs-var hs-var">pretty</span></a></span></span><span> </span><span id="local-6989586621679047568"><span class="annot"><span class="annottext">Gen InsertStatement
+</span><a href="#local-6989586621679047568"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-23"></span><span>  </span><span id="local-6989586621679047569"><span class="annot"><span class="annottext">InsertStatement
+</span><a href="#local-6989586621679047569"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Gen InsertStatement -&gt; IO InsertStatement
+forall a. Gen a -&gt; IO a
+</span><span class="hs-identifier hs-var">generate</span></span><span> </span><span class="annot"><span class="annottext">Gen InsertStatement
+</span><a href="#local-6989586621679047568"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">InsertStatement
+</span><a href="#local-6989586621679047569"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="Populator.html#IS"><span class="hs-identifier hs-type">IS</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">InsertStatement -&gt; String
+</span><a href="Pretty.html#prettyPrintIS"><span class="hs-identifier hs-var">prettyPrintIS</span></a></span><span> </span><span class="annot"><span class="annottext">InsertStatement
+</span><a href="#local-6989586621679047569"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Populator.html#Statements"><span class="hs-identifier hs-type">Statements</span></a></span><span> </span><span id="local-6989586621679047575"><span class="annot"><span class="annottext">[InsertStatement]
+</span><a href="#local-6989586621679047575"><span class="hs-identifier hs-var">ss</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; [String] -&gt; IO ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">([String] -&gt; IO ()) -&gt; [String] -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(InsertStatement -&gt; String) -&gt; [InsertStatement] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">InsertStatement -&gt; String
+</span><a href="Pretty.html#prettyPrintIS"><span class="hs-identifier hs-var">prettyPrintIS</span></a></span><span> </span><span class="annot"><span class="annottext">[InsertStatement]
+</span><a href="#local-6989586621679047575"><span class="hs-identifier hs-var">ss</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="annot"><a href="Pretty.html#prettyPrintIS"><span class="hs-identifier hs-type">prettyPrintIS</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-29"></span><span id="prettyPrintIS"><span class="annot"><span class="annottext">prettyPrintIS :: InsertStatement -&gt; String
+</span><a href="Pretty.html#prettyPrintIS"><span class="hs-identifier hs-var hs-var">prettyPrintIS</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Populator.html#IS"><span class="hs-identifier hs-type">IS</span></a></span><span> </span><span id="local-6989586621679047577"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047577"><span class="hs-identifier hs-var">schemaName</span></a></span></span><span> </span><span id="local-6989586621679047578"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047578"><span class="hs-keyword hs-var">as</span></a></span></span><span> </span><span id="local-6989586621679047579"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047579"><span class="hs-identifier hs-var">vs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;INSERT INTO &quot;</span></span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Char -&gt; Char) -&gt; String -&gt; String
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char
+</span><span class="hs-identifier hs-var">toUpper</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047577"><span class="hs-identifier hs-var">schemaName</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+</span><a href="#local-6989586621679047580"><span class="hs-identifier hs-var">listify</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047578"><span class="hs-keyword hs-var">as</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-32"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;VALUES &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+</span><a href="#local-6989586621679047580"><span class="hs-identifier hs-var">listify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(PSQLTYPE -&gt; String) -&gt; [PSQLTYPE] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE -&gt; String
+</span><a href="Generator.html#showPSQLTYPE"><span class="hs-identifier hs-var">showPSQLTYPE</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047579"><span class="hs-identifier hs-var">vs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;;\n&quot;</span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>    </span><span id="local-6989586621679047580"><span class="annot"><span class="annottext">listify :: [String] -&gt; String
+</span><a href="#local-6989586621679047580"><span class="hs-identifier hs-var hs-var">listify</span></a></span></span><span> </span><span id="local-6989586621679047582"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047582"><span class="hs-keyword hs-var">as</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(&quot;</span></span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; String
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">intercalate</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;,&quot;</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047582"><span class="hs-keyword hs-var">as</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Takes an n and a list generator of random PSQLTYPE data and prints it</span><span>
+</span><span id="line-37"></span><span class="hs-comment">--   in a readible format for debuging.</span><span>
+</span><span id="line-38"></span><span id="debugPSQLList"><span class="annot"><span class="annottext">debugPSQLList :: t -&gt; (t -&gt; Gen (t PSQLTYPE)) -&gt; IO ()
+</span><a href="Pretty.html#debugPSQLList"><span class="hs-identifier hs-var hs-var">debugPSQLList</span></a></span></span><span> </span><span id="local-6989586621679047587"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679047587"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679047588"><span class="annot"><span class="annottext">t -&gt; Gen (t PSQLTYPE)
+</span><a href="#local-6989586621679047588"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679047589"><span class="annot"><span class="annottext">t PSQLTYPE
+</span><a href="#local-6989586621679047589"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Gen (t PSQLTYPE) -&gt; IO (t PSQLTYPE)
+forall a. Gen a -&gt; IO a
+</span><span class="hs-identifier hs-var">generate</span></span><span> </span><span class="annot"><span class="annottext">(Gen (t PSQLTYPE) -&gt; IO (t PSQLTYPE))
+-&gt; Gen (t PSQLTYPE) -&gt; IO (t PSQLTYPE)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; Gen (t PSQLTYPE)
+</span><a href="#local-6989586621679047588"><span class="hs-identifier hs-var">g</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679047587"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">(PSQLTYPE -&gt; IO ()) -&gt; t PSQLTYPE -&gt; IO ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; (PSQLTYPE -&gt; String) -&gt; PSQLTYPE -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE -&gt; String
+</span><a href="Generator.html#showPSQLTYPE"><span class="hs-identifier hs-var">showPSQLTYPE</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">t PSQLTYPE
+</span><a href="#local-6989586621679047589"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="annot"><span class="hs-comment">-- | Takes a generator and prints it in a readible format for debuging</span></span><span>
+</span><span id="line-41"></span><span id="debugPSQL"><span class="annot"><span class="annottext">debugPSQL :: Gen PSQLTYPE -&gt; IO ()
+</span><a href="Pretty.html#debugPSQL"><span class="hs-identifier hs-var hs-var">debugPSQL</span></a></span></span><span> </span><span id="local-6989586621679047592"><span class="annot"><span class="annottext">Gen PSQLTYPE
+</span><a href="#local-6989586621679047592"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679047593"><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047593"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Gen PSQLTYPE -&gt; IO PSQLTYPE
+forall a. Gen a -&gt; IO a
+</span><span class="hs-identifier hs-var">generate</span></span><span> </span><span class="annot"><span class="annottext">Gen PSQLTYPE
+</span><a href="#local-6989586621679047592"><span class="hs-identifier hs-var">g</span></a></span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE -&gt; String
+</span><a href="Generator.html#showPSQLTYPE"><span class="hs-identifier hs-var">showPSQLTYPE</span></a></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047593"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | Takes a generator and the amount of data to be generated,</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   prints that amount in a readible format for debuging.</span><span>
+</span><span id="line-45"></span><span id="debugPSQL%27"><span class="annot"><span class="annottext">debugPSQL' :: Int -&gt; Gen PSQLTYPE -&gt; IO ()
+</span><a href="Pretty.html#debugPSQL%27"><span class="hs-identifier hs-var hs-var">debugPSQL'</span></a></span></span><span> </span><span id="local-6989586621679047597"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047597"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679047598"><span class="annot"><span class="annottext">Gen PSQLTYPE
+</span><a href="#local-6989586621679047598"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679047599"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047599"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Gen [PSQLTYPE] -&gt; IO [PSQLTYPE]
+forall a. Gen a -&gt; IO a
+</span><span class="hs-identifier hs-var">generate</span></span><span> </span><span class="annot"><span class="annottext">(Gen [PSQLTYPE] -&gt; IO [PSQLTYPE])
+-&gt; Gen [PSQLTYPE] -&gt; IO [PSQLTYPE]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Gen PSQLTYPE -&gt; Gen [PSQLTYPE]
+forall a. Int -&gt; Gen a -&gt; Gen [a]
+</span><a href="Generator.html#make"><span class="hs-identifier hs-var">make</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047597"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Gen PSQLTYPE
+</span><a href="#local-6989586621679047598"><span class="hs-identifier hs-var">g</span></a></span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">(PSQLTYPE -&gt; IO ()) -&gt; [PSQLTYPE] -&gt; IO ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; (PSQLTYPE -&gt; String) -&gt; PSQLTYPE -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE -&gt; String
+</span><a href="Generator.html#showPSQLTYPE"><span class="hs-identifier hs-var">showPSQLTYPE</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047599"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-46"></span></pre></body></html>

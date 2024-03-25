@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Populator</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier">InsertStatement</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span>  </span><span class="annot"><span class="hs-comment">-- * Insert Statement constructors</span></span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#insertStatement"><span class="hs-identifier">insertStatement</span></a></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#insert"><span class="hs-identifier">insert</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="annot"><span class="hs-comment">-- * Statement Generators</span></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#selfRefPairs"><span class="hs-identifier">selfRefPairs</span></a></span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#selfRefPairs%27"><span class="hs-identifier">selfRefPairs'</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#pairs2%27"><span class="hs-identifier">pairs2'</span></a></span><span>
+</span><span id="line-12"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#forEachKeyMakePairs"><span class="hs-identifier">forEachKeyMakePairs</span></a></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#forEachKeyMakePairs%27"><span class="hs-identifier">forEachKeyMakePairs'</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#pairFactory"><span class="hs-identifier">pairFactory</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">,</span><span class="annot"><a href="Populator.html#forEachDateMakeDates"><span class="hs-identifier">forEachDateMakeDates</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Generator.html"><span class="hs-identifier">Generator</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Test.QuickCheck</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">intercalate</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">nub</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">nubBy</span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">toUpper</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-25"></span><span class="annot"><span class="hs-comment">-- * PSQL Insert Statement type</span></span><span>
+</span><span id="line-26"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="annot"><span class="hs-comment">-- | Represents an Insert Statement in postgreSequal</span></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">data</span><span> </span><span id="InsertStatement"><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-var">InsertStatement</span></a></span></span><span>
+</span><span id="line-30"></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="IS"><span class="annot"><a href="Populator.html#IS"><span class="hs-identifier hs-var">IS</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="schemaName"><span class="annot"><span class="annottext">InsertStatement -&gt; String
+</span><a href="Populator.html#schemaName"><span class="hs-identifier hs-var hs-var">schemaName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>        </span><span id="attributes"><span class="annot"><span class="annottext">InsertStatement -&gt; [String]
+</span><a href="Populator.html#attributes"><span class="hs-identifier hs-var hs-var">attributes</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>        </span><span id="values"><span class="annot"><span class="annottext">InsertStatement -&gt; [PSQLTYPE]
+</span><a href="Populator.html#values"><span class="hs-identifier hs-var hs-var">values</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-34"></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Statements"><span class="annot"><a href="Populator.html#Statements"><span class="hs-identifier hs-var">Statements</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-35"></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047392"><span id="local-6989586621679047400"><span class="annot"><span class="annottext">InsertStatement -&gt; InsertStatement -&gt; Bool
+(InsertStatement -&gt; InsertStatement -&gt; Bool)
+-&gt; (InsertStatement -&gt; InsertStatement -&gt; Bool)
+-&gt; Eq InsertStatement
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: InsertStatement -&gt; InsertStatement -&gt; Bool
+== :: InsertStatement -&gt; InsertStatement -&gt; Bool
+$c/= :: InsertStatement -&gt; InsertStatement -&gt; Bool
+/= :: InsertStatement -&gt; InsertStatement -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679047406"><span id="local-6989586621679047419"><span id="local-6989586621679047423"><span class="annot"><span class="annottext">Int -&gt; InsertStatement -&gt; ShowS
+[InsertStatement] -&gt; ShowS
+InsertStatement -&gt; String
+(Int -&gt; InsertStatement -&gt; ShowS)
+-&gt; (InsertStatement -&gt; String)
+-&gt; ([InsertStatement] -&gt; ShowS)
+-&gt; Show InsertStatement
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; InsertStatement -&gt; ShowS
+showsPrec :: Int -&gt; InsertStatement -&gt; ShowS
+$cshow :: InsertStatement -&gt; String
+show :: InsertStatement -&gt; String
+$cshowList :: [InsertStatement] -&gt; ShowS
+showList :: [InsertStatement] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-38"></span><span class="annot"><span class="hs-comment">-- * Insert constructors</span></span><span>
+</span><span id="line-39"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | Creates an 'InsertStatement' object based on a schemaName, list of</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   attributes and list of PSQLTYPE values for each attribute.</span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Populator.html#insertStatement"><span class="hs-identifier hs-type">insertStatement</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span>
+</span><span id="line-43"></span><span id="insertStatement"><span class="annot"><span class="annottext">insertStatement :: String -&gt; [String] -&gt; [PSQLTYPE] -&gt; InsertStatement
+</span><a href="Populator.html#insertStatement"><span class="hs-identifier hs-var hs-var">insertStatement</span></a></span></span><span> </span><span id="local-6989586621679047428"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047428"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679047429"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047429"><span class="hs-keyword hs-var">as</span></a></span></span><span> </span><span id="local-6989586621679047430"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047430"><span class="hs-identifier hs-var">ps</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Populator.html#IS"><span class="hs-identifier hs-type">IS</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><span class="annottext">schemaName :: String
+</span><a href="Populator.html#schemaName"><span class="hs-identifier hs-var">schemaName</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047428"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">attributes :: [String]
+</span><a href="Populator.html#attributes"><span class="hs-identifier hs-var">attributes</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047429"><span class="hs-keyword hs-var">as</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">values :: [PSQLTYPE]
+</span><a href="Populator.html#values"><span class="hs-identifier hs-var">values</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047430"><span class="hs-identifier hs-var">ps</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- Not exported. Makes a collection of insert statements.</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Populator.html#statements"><span class="hs-identifier hs-type">statements</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span>
+</span><span id="line-47"></span><span id="statements"><span class="annot"><span class="annottext">statements :: [InsertStatement] -&gt; InsertStatement
+</span><a href="Populator.html#statements"><span class="hs-identifier hs-var hs-var">statements</span></a></span></span><span> </span><span id="local-6989586621679047432"><span class="annot"><span class="annottext">[InsertStatement]
+</span><a href="#local-6989586621679047432"><span class="hs-identifier hs-var">iss</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[InsertStatement] -&gt; InsertStatement
+</span><a href="Populator.html#Statements"><span class="hs-identifier hs-var">Statements</span></a></span><span> </span><span class="annot"><span class="annottext">[InsertStatement]
+</span><a href="#local-6989586621679047432"><span class="hs-identifier hs-var">iss</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- | Creates many 'InsertStatement' objects in a collection, using</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--   the shared schemaName, shared attributes and a list of lists of values.</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--   E.g. insert &quot;user&quot; [&quot;name&quot;,&quot;email&quot;] [[names],[emails]]</span><span>
+</span><span id="line-52"></span><span class="annot"><a href="Populator.html#insert"><span class="hs-identifier hs-type">insert</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Populator.html#InsertStatement"><span class="hs-identifier hs-type">InsertStatement</span></a></span><span>
+</span><span id="line-53"></span><span id="insert"><span class="annot"><span class="annottext">insert :: String -&gt; [String] -&gt; [[PSQLTYPE]] -&gt; InsertStatement
+</span><a href="Populator.html#insert"><span class="hs-identifier hs-var hs-var">insert</span></a></span></span><span> </span><span id="local-6989586621679047433"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047433"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679047434"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047434"><span class="hs-keyword hs-var">as</span></a></span></span><span> </span><span id="local-6989586621679047435"><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047435"><span class="hs-identifier hs-var">pss</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[InsertStatement] -&gt; InsertStatement
+</span><a href="Populator.html#statements"><span class="hs-identifier hs-var">statements</span></a></span><span> </span><span class="annot"><span class="annottext">([InsertStatement] -&gt; InsertStatement)
+-&gt; [InsertStatement] -&gt; InsertStatement
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">([PSQLTYPE] -&gt; InsertStatement)
+-&gt; [[PSQLTYPE]] -&gt; [InsertStatement]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; [PSQLTYPE] -&gt; InsertStatement
+</span><a href="Populator.html#insertStatement"><span class="hs-identifier hs-var">insertStatement</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679047433"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679047434"><span class="hs-keyword hs-var">as</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[[PSQLTYPE]] -&gt; [[PSQLTYPE]]
+</span><a href="Populator.html#listZip"><span class="hs-identifier hs-var">listZip</span></a></span><span> </span><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047435"><span class="hs-identifier hs-var">pss</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- not exported</span><span>
+</span><span id="line-56"></span><span class="annot"><a href="Populator.html#listZip"><span class="hs-identifier hs-type">listZip</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span>
+</span><span id="line-57"></span><span id="listZip"><span class="annot"><span class="annottext">listZip :: [[PSQLTYPE]] -&gt; [[PSQLTYPE]]
+</span><a href="Populator.html#listZip"><span class="hs-identifier hs-var hs-var">listZip</span></a></span></span><span> </span><span id="local-6989586621679047437"><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047437"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[[PSQLTYPE]] -&gt; [[PSQLTYPE]] -&gt; [[PSQLTYPE]]
+forall {b}. [[b]] -&gt; [[b]] -&gt; [[b]]
+</span><a href="#local-6989586621679047438"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047437"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-58"></span><span>  </span><span id="local-6989586621679047438"><span class="annot"><span class="annottext">go :: [[b]] -&gt; [[b]] -&gt; [[b]]
+</span><a href="#local-6989586621679047438"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span class="annot"><span class="annottext">[[b]]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679047441"><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047441"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047441"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-59"></span><span>  </span><span class="annot"><a href="#local-6989586621679047438"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span id="local-6989586621679047442"><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047442"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679047443"><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047443"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[[b]] -&gt; [[b]] -&gt; [[b]]
+</span><a href="#local-6989586621679047438"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">([b] -&gt; [b]) -&gt; [[b]] -&gt; [[b]]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; [b] -&gt; [b]
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047442"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">([b] -&gt; b) -&gt; [[b]] -&gt; [b]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">[b] -&gt; b
+forall a. HasCallStack =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047442"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">[b] -&gt; [[b]] -&gt; [[b]]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[[b]]
+</span><a href="#local-6989586621679047443"><span class="hs-identifier hs-var">acc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-62"></span><span class="annot"><span class="hs-comment">-- * Statement generators</span></span><span>
+</span><span id="line-63"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- | Create non reflexive pairs from one list of key.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--   For each key, pair it with unique keys from the same list.</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--   Each key gets a maximum nr of random pairings.</span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Populator.html#selfRefPairs"><span class="hs-identifier hs-type">selfRefPairs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span id="selfRefPairs"><span class="annot"><span class="annottext">selfRefPairs :: Int -&gt; [PSQLTYPE] -&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#selfRefPairs"><span class="hs-identifier hs-var hs-var">selfRefPairs</span></a></span></span><span> </span><span id="local-6989586621679047446"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047446"><span class="hs-identifier hs-var">max</span></a></span></span><span> </span><span id="local-6989586621679047447"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047447"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int, Int)
+-&gt; [PSQLTYPE]
+-&gt; [PSQLTYPE]
+-&gt; ([PSQLTYPE]
+    -&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)]))
+-&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#pairFactory"><span class="hs-identifier hs-var">pairFactory</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047446"><span class="hs-identifier hs-var">max</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047447"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047447"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047448"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><a href="#local-6989586621679047448"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679047448"><span class="annot"><span class="annottext">f :: [PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047448"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679047449"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047449"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047450"><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047450"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679047451"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047451"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679047452"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047452"><span class="hs-identifier hs-var">index</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int -&gt; [PSQLTYPE] -&gt; [PSQLTYPE]
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047452"><span class="hs-identifier hs-var">index</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047449"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; [PSQLTYPE] -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int, [(PSQLTYPE, PSQLTYPE)]) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-74"></span><span>         </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047453"><span class="annot"><span class="annottext">l' :: [PSQLTYPE]
+</span><a href="#local-6989586621679047453"><span class="hs-identifier hs-var hs-var">l'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; [PSQLTYPE] -&gt; [PSQLTYPE]
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047452"><span class="hs-identifier hs-var">index</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047449"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-75"></span><span>         </span><span id="local-6989586621679047454"><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047454"><span class="hs-identifier hs-var">ps</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+forall a. Int -&gt; Gen a -&gt; Gen [a]
+</span><a href="Generator.html#make"><span class="hs-identifier hs-var">make</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047451"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">(Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)])
+-&gt; Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-76"></span><span>           </span><span id="local-6989586621679047456"><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047456"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; Gen PSQLTYPE
+forall a. [a] -&gt; Gen a
+</span><span class="hs-identifier hs-var">elements</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047453"><span class="hs-identifier hs-var">l'</span></a></span><span>
+</span><span id="line-77"></span><span>           </span><span class="annot"><span class="annottext">(PSQLTYPE, PSQLTYPE) -&gt; Gen (PSQLTYPE, PSQLTYPE)
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047450"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047456"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>         </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047462"><span class="annot"><span class="annottext">ps' :: [(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047462"><span class="hs-identifier hs-var hs-var">ps'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)] -&gt; [(PSQLTYPE, PSQLTYPE)]
+forall a. Eq a =&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">nub</span></span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047454"><span class="hs-identifier hs-var">ps</span></a></span><span>
+</span><span id="line-79"></span><span>         </span><span class="annot"><span class="annottext">(Int, [(PSQLTYPE, PSQLTYPE)]) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047462"><span class="hs-identifier hs-var">ps'</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047462"><span class="hs-identifier hs-var">ps'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><span class="hs-comment">-- | Same ass 'selfRedPairs' but without the nr of pairs per element.</span></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="Populator.html#selfRefPairs%27"><span class="hs-identifier hs-type">selfRefPairs'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span>
+</span><span id="line-83"></span><span id="selfRefPairs%27"><span class="annot"><span class="annottext">selfRefPairs' :: Int -&gt; [PSQLTYPE] -&gt; Gen [[PSQLTYPE]]
+</span><a href="Populator.html#selfRefPairs%27"><span class="hs-identifier hs-var hs-var">selfRefPairs'</span></a></span></span><span> </span><span id="local-6989586621679047464"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047464"><span class="hs-identifier hs-var">max</span></a></span></span><span> </span><span id="local-6989586621679047465"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047465"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Int]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span id="local-6989586621679047466"><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047466"><span class="hs-identifier hs-var">l</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; [PSQLTYPE] -&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#selfRefPairs"><span class="hs-identifier hs-var">selfRefPairs</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047464"><span class="hs-identifier hs-var">max</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047465"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><span class="annottext">[[PSQLTYPE]] -&gt; Gen [[PSQLTYPE]]
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">[[PSQLTYPE]]
+</span><a href="#local-6989586621679047466"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- | For each element in the first list,</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--   choose a random element from the second list.</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--   Elements from the first list occur only once,</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--   but elements from the second list occur multiple times.</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Populator.html#pairs2%27"><span class="hs-identifier hs-type">pairs2'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-92"></span><span id="pairs2%27"><span class="annot"><span class="annottext">pairs2' :: [PSQLTYPE] -&gt; [PSQLTYPE] -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+</span><a href="Populator.html#pairs2%27"><span class="hs-identifier hs-var hs-var">pairs2'</span></a></span></span><span> </span><span id="local-6989586621679047467"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047467"><span class="hs-identifier hs-var">k1</span></a></span></span><span> </span><span id="local-6989586621679047468"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047468"><span class="hs-identifier hs-var">k2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047469"><span class="annot"><span class="annottext">g :: Gen PSQLTYPE
+</span><a href="#local-6989586621679047469"><span class="hs-identifier hs-var hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; Gen PSQLTYPE
+forall a. [a] -&gt; Gen a
+</span><span class="hs-identifier hs-var">elements</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047468"><span class="hs-identifier hs-var">k2</span></a></span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><span class="annottext">(PSQLTYPE -&gt; Gen (PSQLTYPE, PSQLTYPE))
+-&gt; [PSQLTYPE] -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; [a] -&gt; m [b]
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Gen PSQLTYPE -&gt; PSQLTYPE -&gt; Gen (PSQLTYPE, PSQLTYPE)
+forall {m :: * -&gt; *} {b} {a}. Monad m =&gt; m b -&gt; a -&gt; m (a, b)
+</span><a href="#local-6989586621679047471"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Gen PSQLTYPE
+</span><a href="#local-6989586621679047469"><span class="hs-identifier hs-var">g</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047467"><span class="hs-identifier hs-var">k1</span></a></span><span>
+</span><span id="line-95"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-96"></span><span>    </span><span id="local-6989586621679047471"><span class="annot"><span class="annottext">f :: m b -&gt; a -&gt; m (a, b)
+</span><a href="#local-6989586621679047471"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679047482"><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679047482"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span id="local-6989586621679047483"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679047483"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-97"></span><span>      </span><span id="local-6989586621679047484"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679047484"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679047482"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-98"></span><span>      </span><span class="annot"><span class="annottext">(a, b) -&gt; m (a, b)
+forall a. a -&gt; m a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679047483"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679047484"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="annot"><span class="hs-comment">-- | Same as 'forEachKeyMakePairs' but discards the nr of pairs per key list.</span></span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Populator.html#forEachKeyMakePairs%27"><span class="hs-identifier hs-type">forEachKeyMakePairs'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span>
+</span><span id="line-102"></span><span id="forEachKeyMakePairs%27"><span class="annot"><span class="annottext">forEachKeyMakePairs' :: (Int, Int) -&gt; [PSQLTYPE] -&gt; [PSQLTYPE] -&gt; Gen [[PSQLTYPE]]
+</span><a href="Populator.html#forEachKeyMakePairs%27"><span class="hs-identifier hs-var hs-var">forEachKeyMakePairs'</span></a></span></span><span> </span><span id="local-6989586621679047485"><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047485"><span class="hs-identifier hs-var">ft</span></a></span></span><span> </span><span id="local-6989586621679047486"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047486"><span class="hs-identifier hs-var">k1</span></a></span></span><span> </span><span id="local-6989586621679047487"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047487"><span class="hs-identifier hs-var">k2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-103"></span><span>  </span><span id="local-6989586621679047488"><span class="annot"><span class="annottext">([Int], [[PSQLTYPE]])
+</span><a href="#local-6989586621679047488"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; [PSQLTYPE] -&gt; [PSQLTYPE] -&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#forEachKeyMakePairs"><span class="hs-identifier hs-var">forEachKeyMakePairs</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047485"><span class="hs-identifier hs-var">ft</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047486"><span class="hs-identifier hs-var">k1</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047487"><span class="hs-identifier hs-var">k2</span></a></span><span>
+</span><span id="line-104"></span><span>  </span><span class="annot"><span class="annottext">[[PSQLTYPE]] -&gt; Gen [[PSQLTYPE]]
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">([[PSQLTYPE]] -&gt; Gen [[PSQLTYPE]])
+-&gt; (([Int], [[PSQLTYPE]]) -&gt; [[PSQLTYPE]])
+-&gt; ([Int], [[PSQLTYPE]])
+-&gt; Gen [[PSQLTYPE]]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">([Int], [[PSQLTYPE]]) -&gt; [[PSQLTYPE]]
+forall a b. (a, b) -&gt; b
+</span><span class="hs-identifier hs-var">snd</span></span><span> </span><span class="annot"><span class="annottext">(([Int], [[PSQLTYPE]]) -&gt; Gen [[PSQLTYPE]])
+-&gt; ([Int], [[PSQLTYPE]]) -&gt; Gen [[PSQLTYPE]]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">([Int], [[PSQLTYPE]])
+</span><a href="#local-6989586621679047488"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- | For each key in the first list choose</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--   up to n random and unique keys in the second list.</span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Populator.html#forEachKeyMakePairs"><span class="hs-identifier hs-type">forEachKeyMakePairs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span id="forEachKeyMakePairs"><span class="annot"><span class="annottext">forEachKeyMakePairs :: (Int, Int) -&gt; [PSQLTYPE] -&gt; [PSQLTYPE] -&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#forEachKeyMakePairs"><span class="hs-identifier hs-var hs-var">forEachKeyMakePairs</span></a></span></span><span> </span><span id="local-6989586621679047491"><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047491"><span class="hs-identifier hs-var">fromTo</span></a></span></span><span> </span><span id="local-6989586621679047492"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047492"><span class="hs-identifier hs-var">k1</span></a></span></span><span> </span><span id="local-6989586621679047493"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047493"><span class="hs-identifier hs-var">k2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int, Int)
+-&gt; [PSQLTYPE]
+-&gt; [PSQLTYPE]
+-&gt; ([PSQLTYPE]
+    -&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)]))
+-&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#pairFactory"><span class="hs-identifier hs-var">pairFactory</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047491"><span class="hs-identifier hs-var">fromTo</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047492"><span class="hs-identifier hs-var">k1</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047493"><span class="hs-identifier hs-var">k2</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047494"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-111"></span><span>    </span><span class="annot"><a href="#local-6989586621679047494"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>    </span><span id="local-6989586621679047494"><span class="annot"><span class="annottext">f :: [PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047494"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679047495"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047495"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047496"><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047496"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679047497"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047497"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679047498"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047498"><span class="hs-identifier hs-var">index</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-113"></span><span>      </span><span id="local-6989586621679047499"><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047499"><span class="hs-identifier hs-var">ps</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+forall a. Int -&gt; Gen a -&gt; Gen [a]
+</span><a href="Generator.html#make"><span class="hs-identifier hs-var">make</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047497"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">(Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)])
+-&gt; Gen (PSQLTYPE, PSQLTYPE) -&gt; Gen [(PSQLTYPE, PSQLTYPE)]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
+</span><span id="line-114"></span><span>           </span><span id="local-6989586621679047500"><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047500"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; Gen PSQLTYPE
+forall a. [a] -&gt; Gen a
+</span><span class="hs-identifier hs-var">elements</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047495"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-115"></span><span>           </span><span class="annot"><span class="annottext">(PSQLTYPE, PSQLTYPE) -&gt; Gen (PSQLTYPE, PSQLTYPE)
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047496"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">PSQLTYPE
+</span><a href="#local-6989586621679047500"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047504"><span class="annot"><span class="annottext">ps' :: [(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047504"><span class="hs-identifier hs-var hs-var">ps'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)] -&gt; [(PSQLTYPE, PSQLTYPE)]
+forall a. Eq a =&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">nub</span></span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047499"><span class="hs-identifier hs-var">ps</span></a></span><span>
+</span><span id="line-117"></span><span>      </span><span class="annot"><span class="annottext">(Int, [(PSQLTYPE, PSQLTYPE)]) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047504"><span class="hs-identifier hs-var">ps'</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)]
+</span><a href="#local-6989586621679047504"><span class="hs-identifier hs-var">ps'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- | Make pairs based on a function that uses a list to choose from,</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--   the current element to pair to, how many to pair it to and what</span><span>
+</span><span id="line-121"></span><span class="hs-comment">--   index it has.</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--   Returns the number of pairs per element from the first list</span><span>
+</span><span id="line-123"></span><span class="hs-comment">--   and and two lists of an unziped pair in a list.</span><span>
+</span><span id="line-124"></span><span class="hs-comment">--   ([nr of pairs per element],[[p1],[p2]]).</span><span>
+</span><span id="line-125"></span><span class="hs-comment">--   Used in 'forEachKeyMakePairs', and 'selfRefPairs'.</span><span>
+</span><span id="line-126"></span><span class="annot"><a href="Populator.html#pairFactory"><span class="hs-identifier hs-type">pairFactory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-127"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">,</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-129"></span><span>                  </span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span id="pairFactory"><span class="annot"><span class="annottext">pairFactory :: (Int, Int)
+-&gt; [PSQLTYPE]
+-&gt; [PSQLTYPE]
+-&gt; ([PSQLTYPE]
+    -&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)]))
+-&gt; Gen ([Int], [[PSQLTYPE]])
+</span><a href="Populator.html#pairFactory"><span class="hs-identifier hs-var hs-var">pairFactory</span></a></span></span><span> </span><span id="local-6989586621679047505"><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047505"><span class="hs-identifier hs-var">fromTo</span></a></span></span><span> </span><span id="local-6989586621679047506"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047506"><span class="hs-identifier hs-var">k1</span></a></span></span><span> </span><span id="local-6989586621679047507"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047507"><span class="hs-identifier hs-var">k2</span></a></span></span><span> </span><span id="local-6989586621679047508"><span class="annot"><span class="annottext">[PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047508"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-132"></span><span>  </span><span id="local-6989586621679047509"><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047509"><span class="hs-identifier hs-var">ns</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Gen Int -&gt; Gen [Int]
+forall a. Int -&gt; Gen a -&gt; Gen [a]
+</span><a href="Generator.html#make"><span class="hs-identifier hs-var">make</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047506"><span class="hs-identifier hs-var">k1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Gen Int -&gt; Gen [Int]) -&gt; Gen Int -&gt; Gen [Int]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Gen Int
+</span><span class="hs-identifier hs-var">chooseInt</span></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679047505"><span class="hs-identifier hs-var">fromTo</span></a></span><span>
+</span><span id="line-133"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047515"><span class="annot"><span class="annottext">k1n :: [(PSQLTYPE, Int, Int)]
+</span><a href="#local-6989586621679047515"><span class="hs-identifier hs-var hs-var">k1n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE] -&gt; [Int] -&gt; [Int] -&gt; [(PSQLTYPE, Int, Int)]
+forall a b c. [a] -&gt; [b] -&gt; [c] -&gt; [(a, b, c)]
+</span><span class="hs-identifier hs-var">zip3</span></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047506"><span class="hs-identifier hs-var">k1</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047509"><span class="hs-identifier hs-var">ns</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-glyph">..</span><span class="hs-special">]</span><span> </span><span class="hs-comment">-- [(PSQLTYPE,pairs to make,Index)]</span><span>
+</span><span id="line-134"></span><span>  </span><span id="local-6989586621679047517"><span class="annot"><span class="annottext">[(Int, [(PSQLTYPE, PSQLTYPE)])]
+</span><a href="#local-6989586621679047517"><span class="hs-identifier hs-var">nrAndPairs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">((PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)]))
+-&gt; [(PSQLTYPE, Int, Int)] -&gt; Gen [(Int, [(PSQLTYPE, PSQLTYPE)])]
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; [a] -&gt; m [b]
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[PSQLTYPE]
+-&gt; (PSQLTYPE, Int, Int) -&gt; Gen (Int, [(PSQLTYPE, PSQLTYPE)])
+</span><a href="#local-6989586621679047508"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047507"><span class="hs-identifier hs-var">k2</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, Int, Int)]
+</span><a href="#local-6989586621679047515"><span class="hs-identifier hs-var">k1n</span></a></span><span> </span><span class="hs-comment">-- [(Int,[(p,p)])]</span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047518"><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047518"><span class="hs-identifier hs-var">nrs</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679047519"><span class="annot"><span class="annottext">[[(PSQLTYPE, PSQLTYPE)]]
+</span><a href="#local-6989586621679047519"><span class="hs-identifier hs-var">pairs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(Int, [(PSQLTYPE, PSQLTYPE)])]
+-&gt; ([Int], [[(PSQLTYPE, PSQLTYPE)]])
+forall a b. [(a, b)] -&gt; ([a], [b])
+</span><span class="hs-identifier hs-var">unzip</span></span><span> </span><span class="annot"><span class="annottext">[(Int, [(PSQLTYPE, PSQLTYPE)])]
+</span><a href="#local-6989586621679047517"><span class="hs-identifier hs-var">nrAndPairs</span></a></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047522"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047522"><span class="hs-identifier hs-var">l1</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679047523"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047523"><span class="hs-identifier hs-var">l2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(PSQLTYPE, PSQLTYPE)] -&gt; ([PSQLTYPE], [PSQLTYPE])
+forall a b. [(a, b)] -&gt; ([a], [b])
+</span><span class="hs-identifier hs-var">unzip</span></span><span> </span><span class="annot"><span class="annottext">([(PSQLTYPE, PSQLTYPE)] -&gt; ([PSQLTYPE], [PSQLTYPE]))
+-&gt; ([[(PSQLTYPE, PSQLTYPE)]] -&gt; [(PSQLTYPE, PSQLTYPE)])
+-&gt; [[(PSQLTYPE, PSQLTYPE)]]
+-&gt; ([PSQLTYPE], [PSQLTYPE])
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[[(PSQLTYPE, PSQLTYPE)]] -&gt; [(PSQLTYPE, PSQLTYPE)]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">concat</span></span><span> </span><span class="annot"><span class="annottext">([[(PSQLTYPE, PSQLTYPE)]] -&gt; ([PSQLTYPE], [PSQLTYPE]))
+-&gt; [[(PSQLTYPE, PSQLTYPE)]] -&gt; ([PSQLTYPE], [PSQLTYPE])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[[(PSQLTYPE, PSQLTYPE)]]
+</span><a href="#local-6989586621679047519"><span class="hs-identifier hs-var">pairs</span></a></span><span>
+</span><span id="line-137"></span><span>  </span><span class="annot"><span class="annottext">([Int], [[PSQLTYPE]]) -&gt; Gen ([Int], [[PSQLTYPE]])
+forall a. a -&gt; Gen a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047518"><span class="hs-identifier hs-var">nrs</span></a></span><span class="hs-special">,</span><span class="hs-special">[</span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047522"><span class="hs-identifier hs-var">l1</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047523"><span class="hs-identifier hs-var">l2</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span class="hs-comment">-- | For each date in the list of dates, make a date that is equal to</span><span>
+</span><span id="line-140"></span><span class="hs-comment">--   or later than that date.</span><span>
+</span><span id="line-141"></span><span class="annot"><a href="Populator.html#forEachDateMakeDates"><span class="hs-identifier hs-type">forEachDateMakeDates</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span class="hs-special">]</span><span>
+</span><span id="line-142"></span><span id="forEachDateMakeDates"><span class="annot"><span class="annottext">forEachDateMakeDates :: [PSQLTYPE] -&gt; [Int] -&gt; Gen [[PSQLTYPE]]
+</span><a href="Populator.html#forEachDateMakeDates"><span class="hs-identifier hs-var hs-var">forEachDateMakeDates</span></a></span></span><span> </span><span id="local-6989586621679047525"><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047525"><span class="hs-identifier hs-var">ds</span></a></span></span><span> </span><span id="local-6989586621679047526"><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047526"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-143"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679047527"><span class="annot"><span class="annottext">fromDates :: [(Int, (Int, Int, Int))]
+</span><a href="#local-6989586621679047527"><span class="hs-identifier hs-var hs-var">fromDates</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; [(Int, Int, Int)] -&gt; [(Int, (Int, Int, Int))]
+forall a b. [a] -&gt; [b] -&gt; [(a, b)]
+</span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679047526"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(PSQLTYPE -&gt; (Int, Int, Int)) -&gt; [PSQLTYPE] -&gt; [(Int, Int, Int)]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">PSQLTYPE -&gt; (Int, Int, Int)
+</span><a href="Generator.html#unDate"><span class="hs-identifier hs-var">unDate</span></a></span><span> </span><span class="annot"><span class="annottext">[PSQLTYPE]
+</span><a href="#local-6989586621679047525"><span class="hs-identifier hs-var">ds</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>  </span><span class="annot"><span class="annottext">((Int, (Int, Int, Int)) -&gt; Gen [PSQLTYPE])
+-&gt; [(Int, (Int, Int, Int))] -&gt; Gen [[PSQLTYPE]]
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Traversable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m (t b)
+forall (m :: * -&gt; *) a b. Monad m =&gt; (a -&gt; m b) -&gt; [a] -&gt; m [b]
+</span><span class="hs-identifier hs-var">mapM</span></span><span> </span><span class="annot"><span class="annottext">(Int, (Int, Int, Int)) -&gt; Gen [PSQLTYPE]
+</span><a href="#local-6989586621679047529"><span class="hs-identifier hs-var">makeToDates</span></a></span><span> </span><span class="annot"><span class="annottext">[(Int, (Int, Int, Int))]
+</span><a href="#local-6989586621679047527"><span class="hs-identifier hs-var">fromDates</span></a></span><span>
+</span><span id="line-145"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><a href="#local-6989586621679047529"><span class="hs-identifier hs-type">makeToDates</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Gen</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Generator.html#PSQLTYPE"><span class="hs-identifier hs-type">PSQLTYPE</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-147"></span><span>    </span><span id="local-6989586621679047529"><span class="annot"><span class="annottext">makeToDates :: (Int, (Int, Int, Int)) -&gt; Gen [PSQLTYPE]
+</span><a href="#local-6989586621679047529"><span class="hs-identifier hs-var hs-var">makeToDates</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679047530"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047530"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">,</span><span class="hs-special">(</span><span id="local-6989586621679047531"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047531"><span class="hs-identifier hs-var">fy</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679047532"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047532"><span class="hs-identifier hs-var">fm</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679047533"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047533"><span class="hs-identifier hs-var">fd</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Gen PSQLTYPE -&gt; Gen [PSQLTYPE]
+forall a. Int -&gt; Gen a -&gt; Gen [a]
+</span><a href="Generator.html#make"><span class="hs-identifier hs-var">make</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047530"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">(Gen PSQLTYPE -&gt; Gen [PSQLTYPE]) -&gt; Gen PSQLTYPE -&gt; Gen [PSQLTYPE]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Int, Int, Int) -&gt; (Int, Int, Int) -&gt; Gen PSQLTYPE
+</span><a href="Generator.html#dateBetween"><span class="hs-identifier hs-var">dateBetween</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047531"><span class="hs-identifier hs-var">fy</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047532"><span class="hs-identifier hs-var">fm</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047533"><span class="hs-identifier hs-var">fd</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679047531"><span class="hs-identifier hs-var">fy</span></a></span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-148"></span></pre></body></html>

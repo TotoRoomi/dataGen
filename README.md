@@ -19,13 +19,91 @@ stack run > <filename>.psql
 
 ### Try out some functions 
 
-```
+``` 
 stack repl 
 ```
 
 
+## The library 
+
+
+### PSQSLTYPE 
+``` haskell
+data PSQLTYPE
+  = VARCHAR String
+  | DATE (Year, Month, Day) 
+  | INTEGER Int
+  | TIMESTAMP (Year,Month,Day) (Hour,Min,Sec) Int Bool
+  deriving (Eq)
+
+type Year = Int
+type Month = Int
+type Day = Int
+type Hour = Int
+type Min = Int
+type Sec = Int
+```
+This datatype represents a few datatypes used in PSQL. All are self explanitory except TIMESTAMP. The last Int represents the timezone and the Boolean wether to include it or not. As PSQL has several representations of the TIMESTAMP datatype. 
+To convert to and from these the following functions are provided: 
+
+``` haskell
+psqlVarchar :: String -> PSQLTYPE
+unVarchar :: PSQLTYPE -> String
+psqlDate :: (Int,Int,Int) -> PSQLTYPE
+unDate :: PSQLTYPE -> (Int,Int,Int)
+psqlInteger :: Int -> PSQLTYPE
+unInteger :: PSQLTYPE -> Int
+psqlTimestamp :: (Int,Int,Int) -> (Int,Int,Int) -> Int -> Bool -> PSQLTYPE
+```
+
+### Gen PSQLTYPE 
+There are many random data generators, varying from name and email to date and text generators. You can read about them in the haddock documentation, pre-compiled in ```doc/haddock/index.html```. However the vital generators are the following:
+
+``` haskell
+primaryKeys :: Int -> Gen [PSQLTYPE]
+```
+This generator creates unique numbers between 11111 and 99999. The numbers were arbitrarily chosen because five successive numbers look nice. A larger database is not expected to be created using this library so it is more than enough. 
+
+``` haskell
+make :: Int -> Gen a -> Gen [a]
+unique :: (Eq a) => Int -> Gen a -> Gen [a]
+```
+The idea behind these was that you should be able to read the code as if it's human language "Make one hundred emails", "unique ten names". They are fairly self documenting and work as expected, however a caveat is that unique is very slow. It functions at a O(n^3) speed because it keeps generating and removing duplicates, thus it was capped at up to 1000 iterations. The databases produced by this library are not expected to be large, and to keep the niceness of primaryKeys with five numbers it was done this way. Another way would be to introduce a freshness generator that simply iterates. Thus generating a list of n unique numbers would only take O(n) time. 
+
+### Populator 
+While the generators create the random data, the populator creates insert statements in the PSQL format and combines, molds and forms generated data into more useful shapes. 
+
+``` haskell
+data InsertStatement
+ = IS { schemaName :: String,
+        attributes :: [String],
+        values :: [PSQLTYPE]
+      }
+ | Statements [InsertStatement]
+```
+The InsertStatement datatype represents a postgresQL insert statement. 
+To create insert statements the following functions are provided: 
+
+``` haskell
+insertStatement :: String -> [String] -> [PSQLTYPE] -> InsertStatement
+insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
+```
+The first creates a single insert statement, however the latter creates many insert statements to a single table denoted by the first String, the name of the table. This is followed by the attribute names and finally a list of data to insert. 
+The list is a list of lists of data. If you are inserting to a table with usernames and socialsecurity numbers you would send the following list to the function ```[[usernames],[socialsecurity nrs]]```. The function takes care of the rest. Null values are not supported so they have to be of the same lengths. 
+
+Additionally the Populator provides combiinators that create pairs of keys in different shapes. Thesee are again documented in the haddock. 
+
+### Pretty printing 
+A pretty printer is provided to actually print the data in the format that postgres accepts, along with several debuging printers.
+
+``` haskell
+pretty :: Gen InsertStatement -> IO ()
+```
+pretty takes either a single statement or several statements and prints them to standard output.
+
 
 ## General example 
+Finally some examples! 
 
 ``` haskell
 user :: [PSQLTYPE] -> Gen InsertStatement
