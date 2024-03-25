@@ -55,9 +55,9 @@ user uids = do
 -- | Friend(UserID, FriendID)
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
-  -- at least 2 friends, at most half of all the users
-  l <- selfRefPairs' ((length uids) `div` 2) uids -- [[fid][uid]]
+  l <- selfRefPairs' ((length uids) `div` 2) uids
   pure $ insert "Friend" ["UserId","FriendID"] l
+
 
 -- | Post(PostID, Date, UserID)
 post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement

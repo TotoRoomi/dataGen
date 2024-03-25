@@ -26,17 +26,16 @@ stack repl
 
 ## Examples 
 
-``` haskell
-insertUsers :: Int -> Gen [InsertStatement]
-insertUsers n = do
-  primarykeys <- primaryKeys n -- generate a list of n random unique primaryKeys 
-  firstnames <- gen n firstname  -- generate n random firstnames 
-  lastnames <- gen n surname  -- generate n random lastnames 
-  pure $ map makeUser (zip3 primarykeys firstnames lastnames)  -- for each tuple (key, firtname, lastname) make a user 
-  where
-    makeUser (pm,fn,sn) =
-      insertStatement "user" ["userId","name"] [show pm,name2 fn sn]  -- schemaName, list of attribute names, the values for each attribute 
+## General 
 
+``` haskell
+user :: [PSQLTYPE] -> Gen InsertStatement
+user uids = do
+  let n = length uids
+  fns <- firstnames n
+  lns <- lastnames n
+  let names = zipWith name2 fns lns
+  pure $ insert "user" ["userId","name"] [uids,names]
 ```
 
 Produces 
@@ -67,5 +66,22 @@ ghci> generate (date "2024")
 generate takes a "Gen a" and produces an "IO a". If you try this with a "Gen [a]" you'll see that the output is quite unappealing. Instead try the pretty printing function "pretty" that takes a "Gen InsertStatement" and prints it in a readible way. 
 
 ```
-pretty $ insertUsers 10
+pretty $ user 10
 ```
+
+## App/Example.hs 
+![ER diagram and schemas](doc/ERdiag.png)
+
+The Example file shows how to create insert statements for the database above. We will look at the following interesting samples: friend, attends, textPost and likes. These exemplify key features of the library. 
+
+### friend 
+Friend is a self referential table that is non-reflexive. Two people cannot be friends twice in the list as that is a waste of storage space. 
+
+``` haskell
+friend :: [PSQLTYPE] -> Gen InsertStatement
+friend uids = do
+  l <- selfRefPairs' ((length uids) `div` 2) uids
+  pure $ insert "Friend" ["UserId","FriendID"] l
+```
+
+The function uses 'selfRefPairs' and gives half the size of the userIDs list as the maximum number of friends a single person may have. 
