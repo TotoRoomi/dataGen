@@ -91,7 +91,7 @@ insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
 The first creates a single insert statement, however the latter creates many insert statements to a single table denoted by the first String, the name of the table. This is followed by the attribute names and finally a list of data to insert. 
 The list is a list of lists of data. If you are inserting to a table with usernames and socialsecurity numbers you would send the following list to the function ```[[usernames],[socialsecurity nrs]]```. The function takes care of the rest. Null values are not supported so they have to be of the same lengths. 
 
-Additionally the Populator provides combiinators that create pairs of keys in different shapes. Thesee are again documented in the haddock. 
+Additionally the Populator provides combiinators that create pairs of keys in different shapes. Thesee are again documented in the haddock.
 
 ### Pretty printing 
 A pretty printer is provided to actually print the data in the format that postgres accepts, along with several debuging printers.
@@ -204,3 +204,70 @@ likes uids pids ds = do
 
 ```forEachDateMakeDates``` solves this issue by generating a date that is later than or equal to the 'seed' date. ```forEachKeyMakePairs``` returns both a list of integers and the pairs, the integers represents how many pairs each key made. This list is used in ```forEachDateMakeDates``` to tell it how many dates to generate per 'seed' date. 
 
+
+## Challenges 
+### Text 
+There were several challenges in this project. One of which was generating actual grammatically correct text. 
+One of the best ways to do this is through markov chains, where you have a sort of map of words or phrases and likey successor words or phrases. 
+```
+("My",["name is","phone number is", ...])
+... 
+```
+However this would require a large such database of markov chains and with the little research I did I couldn't find a free one. 
+Another strategy is to use an Ai API where you query for  some type of text and it responds with that text. However such API's generally cost money. 
+The strategy I settled on was generating syntactically correct sentances using basic grammatical rules. 
+```<noun phrase> <predicate> <preposition> <nounphrase>``` 
+And randomly generate the different words and phrases through a large list of such words. 
+This worked fairly well, though some sentances were a bit strange "A green meadow argues soothing music". 
+I continued with this and made several varieties and combinations of sentances. The result is a function that randomly chooses some text generator or combination of generators and spits out interesting things. 
+
+"Gentle rain designs a twisting road. That makes me feel grouchy"
+
+"I'm feeling skeptical about the magnificent life drawing event."
+
+"The starry sky fights a busy street"
+
+I designed the event title generator in a similar way. 
+
+```
+<Adjective><Event>
+```
+
+Which resulted in amusing titles. 
+
+"Volunteer Karaoke"
+
+"Impatient pub"
+
+"Shy Charity fundraiser"
+
+As someone who is active in the board of a student union, this is also a useful brainstorming tool for event planning. 
+
+### Dates 
+Dates were also a challenge. At first I created the following function to generate random dates based on a year. 
+
+``` haskell
+date :: Int -> Gen PSQLTYPE
+date year = do
+  month <- chooseInt (1,12)
+  day <- dayGen month
+  pure $ psqlDate (year, month, day)
+  where
+    dayGen m | m == 2 = chooseInt (1,28)
+             | m == 4 || m == 6 || m == 9 || m == 11
+             = chooseInt (1,30)
+             | otherwise = chooseInt (1,31)
+```
+
+However it quickly became outdated as I needed a way to generate dates between two dates. I tried several ways of doing this but all failed. Finally, I found the library ```Data.Time.Calendar``` that supported the enumiration class instance. This solved the problem almost entirely as it was now just about generating a list from a date to a date and choosing a random element. 
+
+This issue deepened however when I was trying to create the inserts for the  ```likes``` schema. At first I just used the previous function ```dateBetween fromDate toDate``` and defined that all likes occur within a span of time and all posts occur withing a span before that. This works but is very ugly and not believable. So I wrote the function
+
+``` haskell
+
+forEachDateMakeDates :: [PSQLTYPE] -> [Int] -> Gen [[PSQLTYPE]]
+```
+
+It creates a series of dates that occur later than the original seed date for each seed date in the first list. The second input is how many likes each post has, thus each seed date gets the appropriate number of like dates. 
+
+### Pairs 
