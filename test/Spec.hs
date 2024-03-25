@@ -92,6 +92,7 @@ makeDatesLaterThanSeed sds ds = do
     toDay (y,m,d) = fromGregorian (toInteger y) m d
     checkDates z = and $ map go z
     go (seed, dates) = and $ map (\d -> seed <= d) dates
+
 makeNDatesPerSeed :: [[PSQLTYPE]] -> [Int] -> Expectation
 makeNDatesPerSeed dates datesPerSeed = do
   let l = zip datesPerSeed $ map (length) dates

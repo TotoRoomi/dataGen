@@ -1,6 +1,21 @@
 -- |
 
-module Populator where
+module Populator
+  (InsertStatement(..)
+  -- * Insert Statement constructors
+  ,insertStatement
+  ,insert
+  -- * Statement Generators
+  ,selfRefPairs
+  ,selfRefPairs'
+  ,pairs2'
+  ,forEachKeyMakePairs
+  ,forEachKeyMakePairs'
+  ,pairFactory
+  ,forEachDateMakeDates
+  )
+
+where
 import Generator
 import Test.QuickCheck
 import Data.List(intercalate, nub, nubBy)
@@ -38,14 +53,13 @@ insert :: String -> [String] -> [[PSQLTYPE]] -> InsertStatement
 insert s as pss = statements $ map (insertStatement s as) (listZip pss)
 
 -- not exported
--- TODO guard and give an error if any list is of a different length
 listZip :: [[PSQLTYPE]] -> [[PSQLTYPE]]
 listZip l = go l [] where
   go ([]:_) acc = acc
   go l acc = go (map (drop 1) l) (map head l : acc)
 
 --------------------------------------------------------------------------------
--- | Statement generators
+-- * Statement generators
 --------------------------------------------------------------------------------
 -- | Create non reflexive pairs from one list of key.
 --   For each key, pair it with unique keys from the same list.
@@ -107,7 +121,8 @@ forEachKeyMakePairs fromTo k1 k2 = pairFactory fromTo k1 k2 f
 --   index it has.
 --   Returns the number of pairs per element from the first list
 --   and and two lists of an unziped pair in a list.
---   ([nr of pairs per element],[[p1],[p2]])
+--   ([nr of pairs per element],[[p1],[p2]]).
+--   Used in 'forEachKeyMakePairs', and 'selfRefPairs'.
 pairFactory :: (Int,Int) -> [PSQLTYPE] -> [PSQLTYPE]
                -> ([PSQLTYPE] -> (PSQLTYPE,Int,Int)
                    -> Gen (Int,[(PSQLTYPE,PSQLTYPE)])

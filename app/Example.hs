@@ -1,25 +1,27 @@
--- |
+-- | Creates insert statements and prints them for the
+--   following example schemas:
+-- User(UserID, Name)
+-- Friend(UserID, FriendID)
+-- Post(PostID, Date, UserID)
+-- PostTag(PostID, Tag)
+-- ImagePost(PostID, URL, Filter)
+-- TextPost(PostID, Text)
+-- VideoPost(PostID, URL, Codec)
+-- Likes(UserID, PostID, Date)
+-- Event(EventID, Place, SDate, EDate, CreatorID, Title)
+-- UserEvent(UserID, EventID)
+-- Subscription(UserID, Expiration)
+-- Transaction(TransactionID, Date)
 
 module Example where
 import Test.QuickCheck
 import Populator
 import Generator
 import Pretty
-{-
- User(UserID, Name)
- Friend(UserID, FriendID)
- Post(PostID, Date, UserID)
- PostTag(PostID, Tag)
- ImagePost(PostID, URL, Filter)
- TextPost(PostID, Text)
- VideoPost(PostID, URL, Codec)
- Likes(UserID, PostID, Date)
- Event(EventID, Place, SDate, EDate, CreatorID, Title)
- UserEvent(UserID, EventID)
- Subscription(UserID, Expiration)
- Transaction(TransactionID, Date)
--}
 
+
+-- | Pretty prints the insert statements in the
+--   format that works in PSQL
 printAllInserts = do
   -- Setup
   userIDs <- generate $ primaryKeys 100
@@ -41,15 +43,7 @@ printAllInserts = do
   pretty $ transaction 100
 
 
-exampleUser :: Gen InsertStatement
-exampleUser = do
-  fn <- firstnames 1
-  sn <- lastnames 1
-  let name = name2 (head fn) (head sn)
-  email <- email2 (head fn) (head sn)
-  date <- date 2024
-  pure $ insertStatement "user" ["name","email","joinDate"] [name,email,date]
-
+-- | User(UserID, Name)
 user :: [PSQLTYPE] -> Gen InsertStatement
 user uids = do
   let n = length uids
@@ -58,34 +52,40 @@ user uids = do
   let names = zipWith name2 fns lns
   pure $ insert "user" ["userId","name"] [uids,names]
 
+-- | Friend(UserID, FriendID)
 friend :: [PSQLTYPE] -> Gen InsertStatement
 friend uids = do
   -- at least 2 friends, at most half of all the users
   l <- selfRefPairs' ((length uids) `div` 2) uids -- [[fid][uid]]
   pure $ insert "Friend" ["UserId","FriendID"] l
-  
+
+-- | Post(PostID, Date, UserID)
 post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 post pids uids = do
   dates <- make (length uids * 100) $ date 2024
   uids' <- make (length pids) $ elements uids
   pure $ insert "Post" ["PostID", "Date", "UserId"] [pids, dates, uids']
 
+-- | PostTag(PostID, Tag)
 postTag :: [PSQLTYPE] -> Gen InsertStatement
 postTag pids = do
   tags <- sequence (replicate (length pids) tagList)
   pure $ insert "PostTag" ["PostID","Tag"] [pids,tags]
 
+-- | TextPost(PostID, Text)
 textPost :: [PSQLTYPE] -> Gen InsertStatement
 textPost pids = do
   texts <- make (length pids) goodText
   pure $ insert "TextPost" ["PostID","Text"] [pids,texts]
 
+-- | ImagePost(PostID, URL, Filter)
 imagePost :: [PSQLTYPE] -> Gen InsertStatement
 imagePost pids = do
   urls <- mapM (url "image") pids
   filters <- make (length pids) imageFilter
   pure $ insert "ImagePost" ["PostID","URL","Filter"] [pids,urls,filters]
 
+-- | VideoPost(PostID, URL, Codec)
 videoPost :: [PSQLTYPE] -> Gen InsertStatement
 videoPost pids = do
   urls <-  mapM (url "video") pids
@@ -108,6 +108,7 @@ likes' uids pids = do
   let (pids', uids') = unzip ps
   pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids,pids,dates]
 
+-- | Likes(UserID, PostID, Date)
 likes :: [PSQLTYPE] -> [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 likes uids pids ds = do
   (ns, pairLists) <- forEachKeyMakePairs (0,length uids) pids uids
@@ -118,30 +119,33 @@ likes uids pids ds = do
   pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids',pids',dates]
 
 
--- Event(EventID, Place, SDate, EDate, CreatorID, Title)
+-- | Event(EventID, Place, SDate, EDate, CreatorID, Title)
 event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
   ps <- pairs2' eids uids
   let n = length ps
-  ds <- make n $ eventTimestampBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  ds <- make n $ eventTimestampBetween (2024,1,1) (2024,12,31)
   let (sdates,edates) = unzip ds
   places <- make n $ place
   let (eids', uids') = unzip ps
   titles <- make n eventTitle
   pure $ insert "Event" ["EventID","Place","SDate", "EDate","CreatorID", "Title"] [eids, places, sdates, edates, uids, titles]
 
+-- | attending(UserID, EventID)
 attending :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 attending uids eids = do
   pairs <- forEachKeyMakePairs' (1,((length uids * 7) `div` 10)) eids uids
   pure $ insert "Attending" ["UserId","EventId"] pairs
 
+-- | Subscription(UserID, Expiration)
 subscription :: [PSQLTYPE] -> Gen InsertStatement
 subscription uids = do
-  n <- chooseInt ((length uids `div` 2), ((length uids * 9 ) `div` 10)) -- mellan hälften och 90% som betalar
+  n <- chooseInt ((length uids `div` 2), ((length uids * 9 ) `div` 10))
   let uids' = take n uids
   dates <- make n $ date 2024
   pure $ insert "Subscription" ["UserID","Date"] [uids', dates]
 
+-- | Transaction(TransactionID, Date)
 transaction :: Int -> Gen InsertStatement
 transaction n = do
   tids <- primaryKeys n

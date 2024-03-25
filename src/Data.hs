@@ -1,9 +1,9 @@
--- | raw input data such as names
+-- | raw input data all in a [String] type.
+--   To create a generator write ```elements <list>```
 
 module Data where
 import Test.QuickCheck
 
--- | Creates a Gen String of names
 firstname
   = ["Toto"
     ,"Harald"
