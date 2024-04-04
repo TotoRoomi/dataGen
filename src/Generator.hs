@@ -72,11 +72,11 @@ instance Show PSQLTYPE where
 showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of
-      VARCHAR s -> "\""++s++"\""
-      DATE (y,m,d) -> "\""++showDate y m d++"\""
+      VARCHAR s -> "\'"++s++"\'"
+      DATE (y,m,d) -> "\'"++showDate y m d++"\'"
       INTEGER i -> show i
-      TIMESTAMP (y,m,d) (h,min,s) t b -> "\""++showDate y m d ++ " "
-                                         ++ showTime h min s ++ showTimezone t b++"\""
+      TIMESTAMP (y,m,d) (h,min,s) t b -> "\'"++showDate y m d ++ " "
+                                         ++ showTime h min s ++ showTimezone t b++"\'"
     where
       showDate y m d = show y ++ "-"++showDD m++"-"++showDD d
       showTime h m s = showDD h ++ ":" ++ showDD m ++":"++ showDD s

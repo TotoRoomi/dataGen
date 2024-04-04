@@ -50,7 +50,7 @@ user uids = do
   fns <- firstnames n
   lns <- lastnames n
   let names = zipWith name2 fns lns
-  pure $ insert "user" ["userId","name"] [uids,names]
+  pure $ insert "users" ["userId","name"] [uids,names]
 
 -- | Friend(UserID, FriendID)
 friend :: [PSQLTYPE] -> Gen InsertStatement
