@@ -78,7 +78,7 @@ selfRefPairs max l = pairFactory (0,max) l l f
          let ps' = nub ps
          pure (length ps', ps')
 
--- | Same ass 'selfRedPairs' but without the nr of pairs per element.
+-- | Same as 'selfRedPairs' but without the nr of pairs per element.
 selfRefPairs' :: Int -> [PSQLTYPE] -> Gen [[PSQLTYPE]]
 selfRefPairs' max l = do
   (_,l) <- selfRefPairs max l

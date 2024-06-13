@@ -30,6 +30,7 @@ module Generator
   ,postTitle
   ,url
   ,tagList
+  ,tagGen
   ,place
   ,imageFilter
   -- * Text generators
@@ -290,6 +291,13 @@ tagList = do
   n <- chooseInt (1,20)
   ts <- unique n (elements tag)
   pure . psqlVarchar $ intercalate " " ts
+
+-- | Generate a random tag
+tagGen :: Gen PSQLTYPE
+tagGen = do
+  t <- elements tag
+  pure . psqlVarchar $ t
+
 
 -- | Generate a random address
 place :: Gen PSQLTYPE

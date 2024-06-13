@@ -28,6 +28,7 @@ printAllInserts = do
   postIDs <- generate $ primaryKeys 1000
   eventIDs <- generate $ primaryKeys 25
   postDates <- generate $ make 1000 $ dateBetween (2024,1,1) (2024,12,1)
+
   -- Generate inserts
   pretty $ user userIDs
   pretty $ friend userIDs
@@ -71,8 +72,9 @@ post pids uids = do
 -- | PostTag(PostID, Tag)
 postTag :: [PSQLTYPE] -> Gen InsertStatement
 postTag pids = do
-  tags <- sequence (replicate (length pids) tagList)
-  pure $ insert "PostTag" ["PostID","Tag"] [pids,tags]
+  tags <- make ( (length pids) * 3) $ tagGen
+  pars <- forEachKeyMakePairs' (1,20) pids tags
+  pure $ insert "PostTag" ["PostID","Tag"] pars
 
 -- | TextPost(PostID, Text)
 textPost :: [PSQLTYPE] -> Gen InsertStatement
@@ -137,7 +139,7 @@ event eids uids = do
 attending :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 attending uids eids = do
   pairs <- forEachKeyMakePairs' (1,((length uids * 7) `div` 10)) eids uids
-  pure $ insert "Attending" ["UserId","EventId"] pairs
+  pure $ insert "Attending" ["UserId","EventId"] [tail . head $ pairs ,head pairs]
 
 -- | Subscription(UserID, Expiration)
 subscription :: [PSQLTYPE] -> Gen InsertStatement
