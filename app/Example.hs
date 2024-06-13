@@ -2,7 +2,7 @@
 --   following example schemas:
 -- User(UserID, Name)
 -- Friend(UserID, FriendID)
--- Post(PostID, Date, UserID)
+-- Post(PostID, Date, UserID, Title, Place)
 -- PostTag(PostID, Tag)
 -- ImagePost(PostID, URL, Filter)
 -- TextPost(PostID, Text)
@@ -30,7 +30,7 @@ printAllInserts = do
   postDates <- generate $ make 1000 $ dateBetween (2024,1,1) (2024,12,1)
   -- Generate inserts
   pretty $ user userIDs
-  pretty $  friend userIDs
+  pretty $ friend userIDs
   pretty $ post postIDs userIDs
   pretty $ postTag postIDs
   pretty $ textPost (take 500 postIDs)
@@ -59,12 +59,14 @@ friend uids = do
   pure $ insert "Friend" ["UserId","FriendID"] l
 
 
--- | Post(PostID, Date, UserID)
+-- | Post(PostID, Date, UserID, Title, Place)
 post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 post pids uids = do
   dates <- make (length uids * 100) $ date 2024
   uids' <- make (length pids) $ elements uids
-  pure $ insert "Post" ["PostID", "Date", "UserId"] [pids, dates, uids']
+  places <- make (length pids) $ place
+  titles <- make (length pids) $ postTitle
+  pure $ insert "Post" ["PostID", "Date", "UserId", "Title", "Place"] [pids, dates, uids', titles, places]
 
 -- | PostTag(PostID, Tag)
 postTag :: [PSQLTYPE] -> Gen InsertStatement
@@ -143,7 +145,7 @@ subscription uids = do
   n <- chooseInt ((length uids `div` 2), ((length uids * 9 ) `div` 10))
   let uids' = take n uids
   dates <- make n $ date 2024
-  pure $ insert "Subscription" ["UserID","Date"] [uids', dates]
+  pure $ insert "Subscription" ["UserID","expiration"] [uids', dates]
 
 -- | Transaction(TransactionID, Date)
 transaction :: Int -> Gen InsertStatement

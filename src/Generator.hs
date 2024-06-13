@@ -27,6 +27,7 @@ module Generator
   ,timestampBetween
   ,eventTimestampBetween
   ,eventTitle
+  ,postTitle
   ,url
   ,tagList
   ,place
@@ -72,7 +73,7 @@ instance Show PSQLTYPE where
 showPSQLTYPE :: PSQLTYPE -> String
 showPSQLTYPE t
   = case t of
-      VARCHAR s -> "\'"++s++"\'"
+      VARCHAR s -> "\'"++concat (map change s)++"\'"
       DATE (y,m,d) -> "\'"++showDate y m d++"\'"
       INTEGER i -> show i
       TIMESTAMP (y,m,d) (h,min,s) t b -> "\'"++showDate y m d ++ " "
@@ -88,6 +89,8 @@ showPSQLTYPE t
       showDD i | i < 10 = "0" ++ show i
                | otherwise = show i
 
+      change s | s == '\'' = "''"
+               | otherwise = [s]
 
 --------------------------------------------------------------------------------
 -- * PSQL constructors
@@ -254,6 +257,25 @@ eventTitle = do
   event <- elements activity
   let s = adj ++ " " ++ event
   pure . psqlVarchar $ s
+
+-- | Generate a random post title
+--   TODO: make more interesting.
+postTitle :: Gen PSQLTYPE
+postTitle = oneof [em, a, np]
+  where
+    em = do
+      e <- elements emotion
+      pure . psqlVarchar $ e
+    a = do
+      act <- elements activity
+      prep <- elements preposition
+      pure . psqlVarchar $ prep ++ " " ++ (map toLower act)
+    np = do
+      npp <- elements nounphrase
+      pure . psqlVarchar $ npp
+
+  
+
 
 -- | Generate a random URL of the form "http://kthsocial.com/S/i*i"
 --   where S is the string passed and i is the PSQLTYPE Integer passed
