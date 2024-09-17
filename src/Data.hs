@@ -333,6 +333,8 @@ surname
 
 emaildomain = "@kth.se"
 
+altTag = ["Crypto","Studying","Question","Social"]
+
 tag
   = ["#love"    ,"#instagood"    ,"#fashion"    ,"#photooftheday"    ,"#photography"    ,"#art"    ,"#beautiful"    ,"#nature"
     ,"#picoftheday"    ,"#happy"    ,"#follow"    ,"#travel"    ,"#cute"    ,"#style"    ,"#instadaily"    ,"#tbt"

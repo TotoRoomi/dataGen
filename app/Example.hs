@@ -19,6 +19,8 @@ import Populator
 import Generator
 import Pretty
 
+import Control.Monad ( replicateM ) 
+
 
 -- | Pretty prints the insert statements in the
 --   format that works in PSQL
@@ -27,12 +29,12 @@ printAllInserts = do
   userIDs <- generate $ primaryKeys 100
   postIDs <- generate $ primaryKeys 1000
   eventIDs <- generate $ primaryKeys 25
-  postDates <- generate $ make 1000 $ dateBetween (2024,1,1) (2024,12,1)
+  postDates <- generate $ make 1000 $ dateBetween (2024,3,28) (2024,12,23)
 
   -- Generate inserts
   pretty $ user userIDs
   pretty $ friend userIDs
-  pretty $ post postIDs userIDs
+  pretty $ post postIDs userIDs postDates 
   pretty $ postTag postIDs
   pretty $ textPost (take 500 postIDs)
   pretty $ imagePost (take 300 $ drop 500 postIDs)
@@ -41,7 +43,7 @@ printAllInserts = do
   pretty $ event eventIDs userIDs
   pretty $ attending userIDs eventIDs
   pretty $ subscription userIDs
-  pretty $ transaction 100
+  pretty $ transaction userIDs
 
 
 -- | User(UserID, Name)
@@ -61,12 +63,11 @@ friend uids = do
 
 
 -- | Post(PostID, Date, UserID, Title, Place)
-post :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
-post pids uids = do
-  dates <- make (length uids * 100) $ date 2024
+post :: [PSQLTYPE] -> [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
+post pids uids dates = do
   uids' <- make (length pids) $ elements uids
-  places <- make (length pids) $ place
-  titles <- make (length pids) $ postTitle
+  places <- make (length pids) place
+  titles <- make (length pids) postTitle
   pure $ insert "Post" ["PostID", "Date", "UserId", "Title", "Place"] [pids, dates, uids', titles, places]
 
 -- | PostTag(PostID, Tag)
@@ -108,7 +109,7 @@ videoPost pids = do
 likes' :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 likes' uids pids = do
   ps <- pairs2' pids uids -- [(uid,pid)]
-  dates <- make (length ps) $ dateBetween (2024,1,1) (2024,12,31) -- [PSQLTYPE]
+  dates <- make (length ps) $ dateBetween (2024,3,28) (2024,12,23) -- [PSQLTYPE]
   let (pids', uids') = unzip ps
   pure $ insert "Likes" ["UserID", "PostID", "Date"] [uids,pids,dates]
 
@@ -128,7 +129,7 @@ event :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 event eids uids = do
   ps <- pairs2' eids uids
   let n = length ps
-  ds <- make n $ eventTimestampBetween (2024,1,1) (2024,12,31)
+  ds <- make n $ eventTimestampBetween (2024,3,28) (2024,12,23)
   let (sdates,edates) = unzip ds
   places <- make n $ place
   let (eids', uids') = unzip ps
@@ -139,7 +140,7 @@ event eids uids = do
 attending :: [PSQLTYPE] -> [PSQLTYPE] -> Gen InsertStatement
 attending uids eids = do
   pairs <- forEachKeyMakePairs' (1,((length uids * 7) `div` 10)) eids uids
-  pure $ insert "Attending" ["UserId","EventId"] [tail . head $ pairs ,head pairs]
+  pure $ insert "Attending" ["UserId","EventId"] [head . tail $ pairs ,head pairs]
 
 -- | Subscription(UserID, Expiration)
 subscription :: [PSQLTYPE] -> Gen InsertStatement
@@ -150,8 +151,19 @@ subscription uids = do
   pure $ insert "Subscription" ["UserID","expiration"] [uids', dates]
 
 -- | Transaction(TransactionID, Date)
-transaction :: Int -> Gen InsertStatement
-transaction n = do
-  tids <- primaryKeys n
-  dates <- make n $ date 2024
-  pure $ insert "Transaction" ["TransactionID","Date"] [tids, dates]
+transaction :: [PSQLTYPE] -> Gen InsertStatement
+transaction tids = do
+  listOfDateList <- mapM genDatesPerUser tids --[ ([id],[(y,m,d)...]) ]
+  let (idList, datesList) = unzip listOfDateList -- ( [[id]], [[date]])
+  let allIds = concat idList 
+  let allDates = map psqlDate $ concat datesList 
+  pure $ insert "Transaction" ["TransactionID","Date"] [allIds, allDates]
+  where
+  --([id],[(y,m,d)...])
+    genDatesPerUser id = do
+      ranStartMonth <- chooseInt(1,3)
+      let nrMonths = 13 - ranStartMonth
+      days <- replicateM nrMonths (chooseInt(23,28))
+      let months = [ranStartMonth .. 12]
+          years = repeat 2024
+      pure $ (replicate nrMonths id, zip3 years months days)
