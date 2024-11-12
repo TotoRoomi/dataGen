@@ -3,8 +3,10 @@ Author:  Toto Roomi
 Version: 0.0
 
 # QuickPop
+What is QuickPop? The name is based on quickcheck + populate = quickpop! It's a DSL that utilizes the quickcheck library to generate random data for a PSQL database of your design. 
+The currently supported types of random data are: Addresses, names, event titles, dates, grammatically coherrent sentances, hashtags, urls. Easily extensible with more types of data! 
+Features: self-referential and non-reflexive data generation, ID pairs and Date pairs. 
 
-A DSL to populate a PSQL database with random dummy data. Uses QuickCheck, hence the name quickcheck + populate = quickpop. 
 
 ## Dependencies
 
